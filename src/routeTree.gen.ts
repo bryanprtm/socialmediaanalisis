@@ -9,8 +9,56 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrendsRouteImport } from './routes/trends'
+import { Route as SnaRouteImport } from './routes/sna'
+import { Route as SentimentRouteImport } from './routes/sentiment'
+import { Route as RecommendationsRouteImport } from './routes/recommendations'
+import { Route as PredictionRouteImport } from './routes/prediction'
+import { Route as MediaRouteImport } from './routes/media'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ComparativeRouteImport } from './routes/comparative'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TrendsRoute = TrendsRouteImport.update({
+  id: '/trends',
+  path: '/trends',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SnaRoute = SnaRouteImport.update({
+  id: '/sna',
+  path: '/sna',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SentimentRoute = SentimentRouteImport.update({
+  id: '/sentiment',
+  path: '/sentiment',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecommendationsRoute = RecommendationsRouteImport.update({
+  id: '/recommendations',
+  path: '/recommendations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PredictionRoute = PredictionRouteImport.update({
+  id: '/prediction',
+  path: '/prediction',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MediaRoute = MediaRouteImport.update({
+  id: '/media',
+  path: '/media',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComparativeRoute = ComparativeRouteImport.update({
+  id: '/comparative',
+  path: '/comparative',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +67,144 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/comparative': typeof ComparativeRoute
+  '/dashboard': typeof DashboardRoute
+  '/media': typeof MediaRoute
+  '/prediction': typeof PredictionRoute
+  '/recommendations': typeof RecommendationsRoute
+  '/sentiment': typeof SentimentRoute
+  '/sna': typeof SnaRoute
+  '/trends': typeof TrendsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/comparative': typeof ComparativeRoute
+  '/dashboard': typeof DashboardRoute
+  '/media': typeof MediaRoute
+  '/prediction': typeof PredictionRoute
+  '/recommendations': typeof RecommendationsRoute
+  '/sentiment': typeof SentimentRoute
+  '/sna': typeof SnaRoute
+  '/trends': typeof TrendsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/comparative': typeof ComparativeRoute
+  '/dashboard': typeof DashboardRoute
+  '/media': typeof MediaRoute
+  '/prediction': typeof PredictionRoute
+  '/recommendations': typeof RecommendationsRoute
+  '/sentiment': typeof SentimentRoute
+  '/sna': typeof SnaRoute
+  '/trends': typeof TrendsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/comparative'
+    | '/dashboard'
+    | '/media'
+    | '/prediction'
+    | '/recommendations'
+    | '/sentiment'
+    | '/sna'
+    | '/trends'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/comparative'
+    | '/dashboard'
+    | '/media'
+    | '/prediction'
+    | '/recommendations'
+    | '/sentiment'
+    | '/sna'
+    | '/trends'
+  id:
+    | '__root__'
+    | '/'
+    | '/comparative'
+    | '/dashboard'
+    | '/media'
+    | '/prediction'
+    | '/recommendations'
+    | '/sentiment'
+    | '/sna'
+    | '/trends'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ComparativeRoute: typeof ComparativeRoute
+  DashboardRoute: typeof DashboardRoute
+  MediaRoute: typeof MediaRoute
+  PredictionRoute: typeof PredictionRoute
+  RecommendationsRoute: typeof RecommendationsRoute
+  SentimentRoute: typeof SentimentRoute
+  SnaRoute: typeof SnaRoute
+  TrendsRoute: typeof TrendsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trends': {
+      id: '/trends'
+      path: '/trends'
+      fullPath: '/trends'
+      preLoaderRoute: typeof TrendsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sna': {
+      id: '/sna'
+      path: '/sna'
+      fullPath: '/sna'
+      preLoaderRoute: typeof SnaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sentiment': {
+      id: '/sentiment'
+      path: '/sentiment'
+      fullPath: '/sentiment'
+      preLoaderRoute: typeof SentimentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recommendations': {
+      id: '/recommendations'
+      path: '/recommendations'
+      fullPath: '/recommendations'
+      preLoaderRoute: typeof RecommendationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prediction': {
+      id: '/prediction'
+      path: '/prediction'
+      fullPath: '/prediction'
+      preLoaderRoute: typeof PredictionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/media': {
+      id: '/media'
+      path: '/media'
+      fullPath: '/media'
+      preLoaderRoute: typeof MediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comparative': {
+      id: '/comparative'
+      path: '/comparative'
+      fullPath: '/comparative'
+      preLoaderRoute: typeof ComparativeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,6 +217,14 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ComparativeRoute: ComparativeRoute,
+  DashboardRoute: DashboardRoute,
+  MediaRoute: MediaRoute,
+  PredictionRoute: PredictionRoute,
+  RecommendationsRoute: RecommendationsRoute,
+  SentimentRoute: SentimentRoute,
+  SnaRoute: SnaRoute,
+  TrendsRoute: TrendsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
