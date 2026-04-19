@@ -29,14 +29,14 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "PROPAM — Monitoring Media & Analisis Sentiment AI" },
+      { title: "Monitoring Media & Analisis Sentiment AI" },
       {
         name: "description",
         content:
           "Platform monitoring berita & analisis sentiment berbasis AI untuk memahami opini publik dari berbagai sumber media di Indonesia secara real-time melalui RSS Feed.",
       },
       { name: "author", content: "PROPAM" },
-      { property: "og:title", content: "PROPAM — Monitoring Media & Analisis Sentiment AI" },
+      { property: "og:title", content: "Monitoring Media & Analisis Sentiment AI" },
       {
         property: "og:description",
         content:
@@ -44,6 +44,12 @@ export const Route = createRootRoute({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "Monitoring Media & Analisis Sentiment AI" },
+      { name: "description", content: "Indo Sentiment Lens monitors Indonesian news and analyzes public opinion using AI." },
+      { property: "og:description", content: "Indo Sentiment Lens monitors Indonesian news and analyzes public opinion using AI." },
+      { name: "twitter:description", content: "Indo Sentiment Lens monitors Indonesian news and analyzes public opinion using AI." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/63633e1c-c2f2-4a89-b3b2-eacf246f822e/id-preview-e9a7dd48--4cf9fa0e-45c5-4162-a549-fe06870852e5.lovable.app-1776576746714.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/63633e1c-c2f2-4a89-b3b2-eacf246f822e/id-preview-e9a7dd48--4cf9fa0e-45c5-4162-a549-fe06870852e5.lovable.app-1776576746714.png" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
