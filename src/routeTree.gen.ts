@@ -12,9 +12,13 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrendsRouteImport } from './routes/trends'
 import { Route as SnaRouteImport } from './routes/sna'
 import { Route as SentimentRouteImport } from './routes/sentiment'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as RssRouteImport } from './routes/rss'
 import { Route as RecommendationsRouteImport } from './routes/recommendations'
 import { Route as PredictionRouteImport } from './routes/prediction'
 import { Route as MediaRouteImport } from './routes/media'
+import { Route as MapRouteImport } from './routes/map'
+import { Route as ExportRouteImport } from './routes/export'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ComparativeRouteImport } from './routes/comparative'
 import { Route as IndexRouteImport } from './routes/index'
@@ -34,6 +38,16 @@ const SentimentRoute = SentimentRouteImport.update({
   path: '/sentiment',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RssRoute = RssRouteImport.update({
+  id: '/rss',
+  path: '/rss',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RecommendationsRoute = RecommendationsRouteImport.update({
   id: '/recommendations',
   path: '/recommendations',
@@ -47,6 +61,16 @@ const PredictionRoute = PredictionRouteImport.update({
 const MediaRoute = MediaRouteImport.update({
   id: '/media',
   path: '/media',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MapRoute = MapRouteImport.update({
+  id: '/map',
+  path: '/map',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExportRoute = ExportRouteImport.update({
+  id: '/export',
+  path: '/export',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -69,9 +93,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/comparative': typeof ComparativeRoute
   '/dashboard': typeof DashboardRoute
+  '/export': typeof ExportRoute
+  '/map': typeof MapRoute
   '/media': typeof MediaRoute
   '/prediction': typeof PredictionRoute
   '/recommendations': typeof RecommendationsRoute
+  '/rss': typeof RssRoute
+  '/search': typeof SearchRoute
   '/sentiment': typeof SentimentRoute
   '/sna': typeof SnaRoute
   '/trends': typeof TrendsRoute
@@ -80,9 +108,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/comparative': typeof ComparativeRoute
   '/dashboard': typeof DashboardRoute
+  '/export': typeof ExportRoute
+  '/map': typeof MapRoute
   '/media': typeof MediaRoute
   '/prediction': typeof PredictionRoute
   '/recommendations': typeof RecommendationsRoute
+  '/rss': typeof RssRoute
+  '/search': typeof SearchRoute
   '/sentiment': typeof SentimentRoute
   '/sna': typeof SnaRoute
   '/trends': typeof TrendsRoute
@@ -92,9 +124,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/comparative': typeof ComparativeRoute
   '/dashboard': typeof DashboardRoute
+  '/export': typeof ExportRoute
+  '/map': typeof MapRoute
   '/media': typeof MediaRoute
   '/prediction': typeof PredictionRoute
   '/recommendations': typeof RecommendationsRoute
+  '/rss': typeof RssRoute
+  '/search': typeof SearchRoute
   '/sentiment': typeof SentimentRoute
   '/sna': typeof SnaRoute
   '/trends': typeof TrendsRoute
@@ -105,9 +141,13 @@ export interface FileRouteTypes {
     | '/'
     | '/comparative'
     | '/dashboard'
+    | '/export'
+    | '/map'
     | '/media'
     | '/prediction'
     | '/recommendations'
+    | '/rss'
+    | '/search'
     | '/sentiment'
     | '/sna'
     | '/trends'
@@ -116,9 +156,13 @@ export interface FileRouteTypes {
     | '/'
     | '/comparative'
     | '/dashboard'
+    | '/export'
+    | '/map'
     | '/media'
     | '/prediction'
     | '/recommendations'
+    | '/rss'
+    | '/search'
     | '/sentiment'
     | '/sna'
     | '/trends'
@@ -127,9 +171,13 @@ export interface FileRouteTypes {
     | '/'
     | '/comparative'
     | '/dashboard'
+    | '/export'
+    | '/map'
     | '/media'
     | '/prediction'
     | '/recommendations'
+    | '/rss'
+    | '/search'
     | '/sentiment'
     | '/sna'
     | '/trends'
@@ -139,9 +187,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ComparativeRoute: typeof ComparativeRoute
   DashboardRoute: typeof DashboardRoute
+  ExportRoute: typeof ExportRoute
+  MapRoute: typeof MapRoute
   MediaRoute: typeof MediaRoute
   PredictionRoute: typeof PredictionRoute
   RecommendationsRoute: typeof RecommendationsRoute
+  RssRoute: typeof RssRoute
+  SearchRoute: typeof SearchRoute
   SentimentRoute: typeof SentimentRoute
   SnaRoute: typeof SnaRoute
   TrendsRoute: typeof TrendsRoute
@@ -170,6 +222,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SentimentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rss': {
+      id: '/rss'
+      path: '/rss'
+      fullPath: '/rss'
+      preLoaderRoute: typeof RssRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/recommendations': {
       id: '/recommendations'
       path: '/recommendations'
@@ -189,6 +255,20 @@ declare module '@tanstack/react-router' {
       path: '/media'
       fullPath: '/media'
       preLoaderRoute: typeof MediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/map': {
+      id: '/map'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof MapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/export': {
+      id: '/export'
+      path: '/export'
+      fullPath: '/export'
+      preLoaderRoute: typeof ExportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -219,9 +299,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ComparativeRoute: ComparativeRoute,
   DashboardRoute: DashboardRoute,
+  ExportRoute: ExportRoute,
+  MapRoute: MapRoute,
   MediaRoute: MediaRoute,
   PredictionRoute: PredictionRoute,
   RecommendationsRoute: RecommendationsRoute,
+  RssRoute: RssRoute,
+  SearchRoute: SearchRoute,
   SentimentRoute: SentimentRoute,
   SnaRoute: SnaRoute,
   TrendsRoute: TrendsRoute,
