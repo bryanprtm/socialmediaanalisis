@@ -31,7 +31,7 @@ const trending = [
 ];
 
 const emerging = [
-  { name: "AI Governance", mentions: 736, growth: "+156.7%", color: "amber" as const },
+  { name: "AI Governance", mentions: 736, growth: "+156.7%", color: "warning" as const },
   { name: "Smart Mobility", mentions: 489, growth: "+134.2%", color: "violet" as const },
   { name: "Startup Fintech", mentions: 367, growth: "+89.5%", color: "success" as const },
   { name: "Perlindungan Digital", mentions: 245, growth: "+67.8%", color: "primary" as const },
