@@ -92,12 +92,8 @@ export function TopNav() {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/85 backdrop-blur-xl">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
       <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-6">
-        <Link to="/" className="flex items-center gap-2.5">
-          <img src={logo} alt="PROPAM" width={36} height={36} className="h-9 w-9 drop-shadow-[0_0_12px_oklch(0.65_0.24_22_/_0.5)]" />
-          <div className="leading-tight">
-            <p className="font-display text-lg font-bold tracking-tight text-foreground">PROPAM</p>
-            <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-primary">Command Center</p>
-          </div>
+        <Link to="/" className="flex items-center gap-2.5" aria-label="PROPAM Home">
+          <img src={logo} alt="PROPAM" width={44} height={44} className="h-11 w-11 drop-shadow-[0_0_12px_oklch(0.82_0.18_80_/_0.5)]" />
         </Link>
 
         <nav ref={navRef} className="hidden items-center gap-1 md:flex">
