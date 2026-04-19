@@ -2,13 +2,20 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { Home, LayoutDashboard, Brain, Zap, Wrench, ChevronDown, User, Settings, LogOut } from "lucide-react";
 import logo from "@/assets/propam-logo.png";
 
-const navItems = [
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof Home;
+  hasDropdown?: boolean;
+};
+
+const navItems: NavItem[] = [
   { to: "/", label: "Home", icon: Home },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/analysis", label: "Analysis", icon: Brain, hasDropdown: true },
   { to: "/advanced", label: "Advanced", icon: Zap, hasDropdown: true },
   { to: "/tools", label: "Tools", icon: Wrench, hasDropdown: true },
-] as const;
+];
 
 export function TopNav() {
   const { pathname } = useLocation();
