@@ -11,10 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrendsRouteImport } from './routes/trends'
 import { Route as SnaRouteImport } from './routes/sna'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SentimentRouteImport } from './routes/sentiment'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as RssRouteImport } from './routes/rss'
 import { Route as RecommendationsRouteImport } from './routes/recommendations'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PredictionRouteImport } from './routes/prediction'
 import { Route as MediaRouteImport } from './routes/media'
 import { Route as MapRouteImport } from './routes/map'
@@ -31,6 +33,11 @@ const TrendsRoute = TrendsRouteImport.update({
 const SnaRoute = SnaRouteImport.update({
   id: '/sna',
   path: '/sna',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SentimentRoute = SentimentRouteImport.update({
@@ -51,6 +58,11 @@ const RssRoute = RssRouteImport.update({
 const RecommendationsRoute = RecommendationsRouteImport.update({
   id: '/recommendations',
   path: '/recommendations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PredictionRoute = PredictionRouteImport.update({
@@ -97,10 +109,12 @@ export interface FileRoutesByFullPath {
   '/map': typeof MapRoute
   '/media': typeof MediaRoute
   '/prediction': typeof PredictionRoute
+  '/profile': typeof ProfileRoute
   '/recommendations': typeof RecommendationsRoute
   '/rss': typeof RssRoute
   '/search': typeof SearchRoute
   '/sentiment': typeof SentimentRoute
+  '/settings': typeof SettingsRoute
   '/sna': typeof SnaRoute
   '/trends': typeof TrendsRoute
 }
@@ -112,10 +126,12 @@ export interface FileRoutesByTo {
   '/map': typeof MapRoute
   '/media': typeof MediaRoute
   '/prediction': typeof PredictionRoute
+  '/profile': typeof ProfileRoute
   '/recommendations': typeof RecommendationsRoute
   '/rss': typeof RssRoute
   '/search': typeof SearchRoute
   '/sentiment': typeof SentimentRoute
+  '/settings': typeof SettingsRoute
   '/sna': typeof SnaRoute
   '/trends': typeof TrendsRoute
 }
@@ -128,10 +144,12 @@ export interface FileRoutesById {
   '/map': typeof MapRoute
   '/media': typeof MediaRoute
   '/prediction': typeof PredictionRoute
+  '/profile': typeof ProfileRoute
   '/recommendations': typeof RecommendationsRoute
   '/rss': typeof RssRoute
   '/search': typeof SearchRoute
   '/sentiment': typeof SentimentRoute
+  '/settings': typeof SettingsRoute
   '/sna': typeof SnaRoute
   '/trends': typeof TrendsRoute
 }
@@ -145,10 +163,12 @@ export interface FileRouteTypes {
     | '/map'
     | '/media'
     | '/prediction'
+    | '/profile'
     | '/recommendations'
     | '/rss'
     | '/search'
     | '/sentiment'
+    | '/settings'
     | '/sna'
     | '/trends'
   fileRoutesByTo: FileRoutesByTo
@@ -160,10 +180,12 @@ export interface FileRouteTypes {
     | '/map'
     | '/media'
     | '/prediction'
+    | '/profile'
     | '/recommendations'
     | '/rss'
     | '/search'
     | '/sentiment'
+    | '/settings'
     | '/sna'
     | '/trends'
   id:
@@ -175,10 +197,12 @@ export interface FileRouteTypes {
     | '/map'
     | '/media'
     | '/prediction'
+    | '/profile'
     | '/recommendations'
     | '/rss'
     | '/search'
     | '/sentiment'
+    | '/settings'
     | '/sna'
     | '/trends'
   fileRoutesById: FileRoutesById
@@ -191,10 +215,12 @@ export interface RootRouteChildren {
   MapRoute: typeof MapRoute
   MediaRoute: typeof MediaRoute
   PredictionRoute: typeof PredictionRoute
+  ProfileRoute: typeof ProfileRoute
   RecommendationsRoute: typeof RecommendationsRoute
   RssRoute: typeof RssRoute
   SearchRoute: typeof SearchRoute
   SentimentRoute: typeof SentimentRoute
+  SettingsRoute: typeof SettingsRoute
   SnaRoute: typeof SnaRoute
   TrendsRoute: typeof TrendsRoute
 }
@@ -213,6 +239,13 @@ declare module '@tanstack/react-router' {
       path: '/sna'
       fullPath: '/sna'
       preLoaderRoute: typeof SnaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sentiment': {
@@ -241,6 +274,13 @@ declare module '@tanstack/react-router' {
       path: '/recommendations'
       fullPath: '/recommendations'
       preLoaderRoute: typeof RecommendationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/prediction': {
@@ -303,13 +343,24 @@ const rootRouteChildren: RootRouteChildren = {
   MapRoute: MapRoute,
   MediaRoute: MediaRoute,
   PredictionRoute: PredictionRoute,
+  ProfileRoute: ProfileRoute,
   RecommendationsRoute: RecommendationsRoute,
   RssRoute: RssRoute,
   SearchRoute: SearchRoute,
   SentimentRoute: SentimentRoute,
+  SettingsRoute: SettingsRoute,
   SnaRoute: SnaRoute,
   TrendsRoute: TrendsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

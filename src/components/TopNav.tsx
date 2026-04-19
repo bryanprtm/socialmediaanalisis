@@ -176,12 +176,12 @@ export function TopNav() {
             <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Live</span>
             <span className="font-mono text-xs font-semibold text-foreground">02:47:13</span>
           </div>
-          <button className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label="Profile">
+          <Link to="/profile" className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label="Profile">
             <User className="h-4.5 w-4.5" />
-          </button>
-          <button className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label="Settings">
+          </Link>
+          <Link to="/settings" className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label="Settings">
             <Settings className="h-4.5 w-4.5" />
-          </button>
+          </Link>
           <button className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label="Logout">
             <LogOut className="h-4.5 w-4.5" />
           </button>
