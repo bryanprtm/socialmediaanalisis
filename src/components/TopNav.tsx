@@ -1,4 +1,4 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   Home,
   LayoutDashboard,
@@ -9,6 +9,7 @@ import {
   User,
   Settings,
   LogOut,
+  LogIn,
   Search,
   Activity,
   TrendingUp,
@@ -23,6 +24,9 @@ import {
   Database,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import logo from "@/assets/propam-logo.png";
 
 type NavLeaf = { to: string; label: string; desc: string; icon: typeof Home };
