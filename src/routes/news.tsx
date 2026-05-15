@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
-import { Database, FileText, Globe, RefreshCw, ExternalLink, Plus, AlertCircle } from "lucide-react";
+import { Database, FileText, Globe, RefreshCw, ExternalLink, Plus, AlertCircle, Pencil, Trash2, Save, X, LogIn } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/news")({
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/news")({
   component: Page,
 });
 
+type Sentiment = "positive" | "negative" | "neutral";
 type Article = {
   id: string;
   title: string;
@@ -22,7 +24,7 @@ type Article = {
   source: string;
   category: string | null;
   excerpt: string | null;
-  sentiment: "positive" | "negative" | "neutral" | null;
+  sentiment: Sentiment | null;
   sentiment_score: number | null;
   confidence: number | null;
   published_at: string | null;
@@ -30,13 +32,7 @@ type Article = {
   keywords: string[] | null;
 };
 
-const empty = {
-  title: "",
-  url: "",
-  source: "",
-  category: "",
-  excerpt: "",
-};
+const empty = { title: "", url: "", source: "", category: "", excerpt: "" };
 
 function timeAgo(iso: string | null) {
   if (!iso) return "—";
@@ -49,11 +45,14 @@ function timeAgo(iso: string | null) {
 }
 
 function Page() {
+  const { isAuthenticated } = useAuth();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"all" | "positive" | "negative" | "neutral">("all");
+  const [filter, setFilter] = useState<"all" | Sentiment>("all");
   const [form, setForm] = useState(empty);
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<Partial<Article>>({});
 
   async function load() {
     setLoading(true);
@@ -83,10 +82,7 @@ function Page() {
 
   async function addArticle(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.title || !form.url || !form.source) {
-      toast.error("Title, URL, dan Source wajib diisi");
-      return;
-    }
+    if (!form.title || !form.url || !form.source) return toast.error("Title, URL, Source wajib");
     setSubmitting(true);
     const { error } = await supabase.from("news_articles").insert({
       title: form.title,
@@ -97,12 +93,47 @@ function Page() {
       published_at: new Date().toISOString(),
     });
     setSubmitting(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
+    if (error) return toast.error(error.message);
     toast.success("Berita ditambahkan");
     setForm(empty);
+  }
+
+  function startEdit(a: Article) {
+    setEditingId(a.id);
+    setEditDraft({
+      title: a.title,
+      url: a.url,
+      source: a.source,
+      category: a.category,
+      excerpt: a.excerpt,
+      sentiment: a.sentiment,
+    });
+  }
+
+  async function saveEdit() {
+    if (!editingId) return;
+    const { error } = await supabase
+      .from("news_articles")
+      .update({
+        title: editDraft.title,
+        url: editDraft.url,
+        source: editDraft.source,
+        category: editDraft.category || null,
+        excerpt: editDraft.excerpt || null,
+        sentiment: editDraft.sentiment || null,
+      })
+      .eq("id", editingId);
+    if (error) return toast.error(error.message);
+    toast.success("Berita diperbarui");
+    setEditingId(null);
+    setEditDraft({});
+  }
+
+  async function deleteArticle(id: string) {
+    if (!confirm("Hapus berita ini?")) return;
+    const { error } = await supabase.from("news_articles").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Berita dihapus");
   }
 
   const counts = {
@@ -123,6 +154,18 @@ function Page() {
         </button>
       }
     >
+      {!isAuthenticated && (
+        <div className="mb-5 flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="h-4 w-4 text-amber-500" />
+            <p className="text-sm text-foreground">Login untuk menambah, mengedit, atau menghapus berita.</p>
+          </div>
+          <Link to="/auth" className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-cyan px-3 py-1.5 text-xs font-semibold text-background">
+            <LogIn className="h-3.5 w-3.5" /> Login
+          </Link>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <MetricCard label="Total Berita" value={String(counts.total)} icon={<Database className="h-5 w-5" />} accent="cyan" hint="Tersimpan di DB" />
         <MetricCard label="Sentiment Positif" value={String(counts.positive)} icon={<FileText className="h-5 w-5" />} accent="success" />
@@ -160,57 +203,144 @@ function Page() {
             </div>
           ) : (
             <ul className="divide-y divide-border">
-              {articles.map((a) => (
-                <li key={a.id} className="group py-4 first:pt-0 last:pb-0">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <h3 className="font-display text-sm font-semibold text-foreground group-hover:text-primary">{a.title}</h3>
-                    {a.sentiment && (
-                      <Pill tone={a.sentiment === "positive" ? "positive" : a.sentiment === "negative" ? "negative" : "neutral"}>
-                        {a.sentiment} {a.sentiment_score ? `· ${a.sentiment_score.toFixed(2)}` : ""}
-                      </Pill>
-                    )}
-                  </div>
-                  {a.excerpt && <p className="mt-1.5 text-sm text-muted-foreground">{a.excerpt}</p>}
-                  <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-[10px] text-muted-foreground">
-                    <span className="text-primary">{a.source}</span>
-                    {a.category && <Pill tone="info">{a.category}</Pill>}
-                    {a.region && <span>· 📍 {a.region}</span>}
-                    <span>· ⏱ {timeAgo(a.published_at)}</span>
-                    <a href={a.url} target="_blank" rel="noreferrer" className="ml-auto inline-flex items-center gap-1 text-primary hover:underline">
-                      Source <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                  {a.keywords && a.keywords.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {a.keywords.map((k) => (
-                        <span key={k} className="rounded-full border border-border bg-panel-elevated px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
-                          #{k}
-                        </span>
-                      ))}
+              {articles.map((a) => {
+                const isEditing = editingId === a.id;
+                if (isEditing) {
+                  return (
+                    <li key={a.id} className="space-y-2 py-4">
+                      <input
+                        value={editDraft.title ?? ""}
+                        onChange={(e) => setEditDraft({ ...editDraft, title: e.target.value })}
+                        placeholder="Judul"
+                        className="h-9 w-full rounded-lg border border-primary/40 bg-panel-elevated px-3 text-sm text-foreground focus:outline-none"
+                      />
+                      <input
+                        value={editDraft.url ?? ""}
+                        onChange={(e) => setEditDraft({ ...editDraft, url: e.target.value })}
+                        placeholder="URL"
+                        className="h-9 w-full rounded-lg border border-border bg-panel-elevated px-3 text-xs font-mono text-foreground focus:outline-none"
+                      />
+                      <div className="grid grid-cols-3 gap-2">
+                        <input
+                          value={editDraft.source ?? ""}
+                          onChange={(e) => setEditDraft({ ...editDraft, source: e.target.value })}
+                          placeholder="Source"
+                          className="h-9 rounded-lg border border-border bg-panel-elevated px-3 text-xs text-foreground focus:outline-none"
+                        />
+                        <input
+                          value={editDraft.category ?? ""}
+                          onChange={(e) => setEditDraft({ ...editDraft, category: e.target.value })}
+                          placeholder="Kategori"
+                          className="h-9 rounded-lg border border-border bg-panel-elevated px-3 text-xs text-foreground focus:outline-none"
+                        />
+                        <select
+                          value={editDraft.sentiment ?? ""}
+                          onChange={(e) => setEditDraft({ ...editDraft, sentiment: (e.target.value || null) as Sentiment | null })}
+                          className="h-9 rounded-lg border border-border bg-panel-elevated px-3 text-xs text-foreground focus:outline-none"
+                        >
+                          <option value="">— Sentiment —</option>
+                          <option value="positive">Positive</option>
+                          <option value="negative">Negative</option>
+                          <option value="neutral">Neutral</option>
+                        </select>
+                      </div>
+                      <textarea
+                        value={editDraft.excerpt ?? ""}
+                        onChange={(e) => setEditDraft({ ...editDraft, excerpt: e.target.value })}
+                        rows={2}
+                        placeholder="Excerpt"
+                        className="w-full rounded-lg border border-border bg-panel-elevated px-3 py-2 text-sm text-foreground focus:outline-none"
+                      />
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => { setEditingId(null); setEditDraft({}); }} className="inline-flex items-center gap-1 rounded-md border border-border bg-panel px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground">
+                          <X className="h-3.5 w-3.5" /> Batal
+                        </button>
+                        <button onClick={saveEdit} className="inline-flex items-center gap-1 rounded-md bg-gradient-cyan px-3 py-1.5 text-xs font-semibold text-background">
+                          <Save className="h-3.5 w-3.5" /> Simpan
+                        </button>
+                      </div>
+                    </li>
+                  );
+                }
+                return (
+                  <li key={a.id} className="group py-4 first:pt-0 last:pb-0">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <h3 className="font-display text-sm font-semibold text-foreground group-hover:text-primary">{a.title}</h3>
+                      <div className="flex items-center gap-2">
+                        {a.sentiment && (
+                          <Pill tone={a.sentiment === "positive" ? "positive" : a.sentiment === "negative" ? "negative" : "neutral"}>
+                            {a.sentiment} {a.sentiment_score ? `· ${a.sentiment_score.toFixed(2)}` : ""}
+                          </Pill>
+                        )}
+                        {isAuthenticated && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => startEdit(a)}
+                              className="rounded-md p-1.5 text-muted-foreground transition hover:bg-primary/15 hover:text-primary"
+                              aria-label="Edit"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => deleteArticle(a.id)}
+                              className="rounded-md p-1.5 text-muted-foreground transition hover:bg-destructive/15 hover:text-destructive"
+                              aria-label="Hapus"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </li>
-              ))}
+                    {a.excerpt && <p className="mt-1.5 text-sm text-muted-foreground">{a.excerpt}</p>}
+                    <div className="mt-2 flex flex-wrap items-center gap-2 font-mono text-[10px] text-muted-foreground">
+                      <span className="text-primary">{a.source}</span>
+                      {a.category && <Pill tone="info">{a.category}</Pill>}
+                      {a.region && <span>· 📍 {a.region}</span>}
+                      <span>· ⏱ {timeAgo(a.published_at)}</span>
+                      <a href={a.url} target="_blank" rel="noreferrer" className="ml-auto inline-flex items-center gap-1 text-primary hover:underline">
+                        Source <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                    {a.keywords && a.keywords.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {a.keywords.map((k) => (
+                          <span key={k} className="rounded-full border border-border bg-panel-elevated px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+                            #{k}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </Panel>
 
         <Panel title="Tambah Berita Manual" icon={<Plus className="h-4 w-4" />}>
-          <form onSubmit={addArticle} className="space-y-2.5">
-            <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Judul berita *" className="h-10 w-full rounded-lg border border-border bg-panel-elevated px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none" />
-            <input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} type="url" placeholder="URL *" className="h-10 w-full rounded-lg border border-border bg-panel-elevated px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none" />
-            <div className="grid grid-cols-2 gap-2">
-              <input value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} placeholder="Source *" className="h-10 rounded-lg border border-border bg-panel-elevated px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none" />
-              <input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Kategori" className="h-10 rounded-lg border border-border bg-panel-elevated px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none" />
+          {!isAuthenticated ? (
+            <div className="flex flex-col items-center gap-3 py-6 text-center">
+              <LogIn className="h-7 w-7 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Login untuk menambah berita ke database.</p>
+              <Link to="/auth" className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-cyan px-4 py-2 text-xs font-semibold text-background">
+                <LogIn className="h-3.5 w-3.5" /> Login Sekarang
+              </Link>
             </div>
-            <textarea value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} placeholder="Ringkasan / excerpt" rows={3} className="w-full rounded-lg border border-border bg-panel-elevated px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none" />
-            <button disabled={submitting} className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-cyan text-xs font-semibold text-background disabled:opacity-50">
-              <Plus className="h-3.5 w-3.5" /> {submitting ? "Menyimpan…" : "Simpan ke Database"}
-            </button>
-            <p className="font-mono text-[10px] text-muted-foreground">
-              * Wajib login. Berita publik dapat dilihat semua orang, namun hanya pengguna terautentikasi yang dapat menambah.
-            </p>
-          </form>
+          ) : (
+            <form onSubmit={addArticle} className="space-y-2.5">
+              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Judul berita *" className="h-10 w-full rounded-lg border border-border bg-panel-elevated px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none" />
+              <input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} type="url" placeholder="URL *" className="h-10 w-full rounded-lg border border-border bg-panel-elevated px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none" />
+              <div className="grid grid-cols-2 gap-2">
+                <input value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} placeholder="Source *" className="h-10 rounded-lg border border-border bg-panel-elevated px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none" />
+                <input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Kategori" className="h-10 rounded-lg border border-border bg-panel-elevated px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none" />
+              </div>
+              <textarea value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} placeholder="Ringkasan / excerpt" rows={3} className="w-full rounded-lg border border-border bg-panel-elevated px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none" />
+              <button disabled={submitting} className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-cyan text-xs font-semibold text-background disabled:opacity-50">
+                <Plus className="h-3.5 w-3.5" /> {submitting ? "Menyimpan…" : "Simpan ke Database"}
+              </button>
+            </form>
+          )}
         </Panel>
       </div>
     </PageShell>

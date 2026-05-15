@@ -1,4 +1,4 @@
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   Home,
   LayoutDashboard,
@@ -9,6 +9,7 @@ import {
   User,
   Settings,
   LogOut,
+  LogIn,
   Search,
   Activity,
   TrendingUp,
@@ -23,6 +24,9 @@ import {
   Database,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import logo from "@/assets/propam-logo.png";
 
 type NavLeaf = { to: string; label: string; desc: string; icon: typeof Home };
@@ -77,6 +81,8 @@ const navItems: NavGroup[] = [
 
 export function TopNav() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
 
@@ -89,6 +95,12 @@ export function TopNav() {
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    toast.success("Logout berhasil");
+    navigate({ to: "/" });
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/85 backdrop-blur-xl">
@@ -174,15 +186,27 @@ export function TopNav() {
             <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Live</span>
             <span className="font-mono text-xs font-semibold text-foreground">02:47:13</span>
           </div>
-          <Link to="/profile" className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label="Profile">
-            <User className="h-4.5 w-4.5" />
-          </Link>
-          <Link to="/settings" className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label="Settings">
-            <Settings className="h-4.5 w-4.5" />
-          </Link>
-          <button className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label="Logout">
-            <LogOut className="h-4.5 w-4.5" />
-          </button>
+          {isAuthenticated ? (
+            <>
+              <Link to="/profile" className="hidden items-center gap-2 rounded-lg border border-border bg-panel px-3 py-1.5 sm:inline-flex" aria-label="Profile">
+                <User className="h-3.5 w-3.5 text-primary" />
+                <span className="font-mono text-[10px] uppercase tracking-wider text-foreground">{user?.email?.split("@")[0]}</span>
+              </Link>
+              <Link to="/settings" className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label="Settings">
+                <Settings className="h-4.5 w-4.5" />
+              </Link>
+              <button onClick={handleLogout} className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-destructive/15 hover:text-destructive" aria-label="Logout">
+                <LogOut className="h-4.5 w-4.5" />
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/auth"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-cyan px-3.5 py-2 text-xs font-semibold text-background shadow-glow"
+            >
+              <LogIn className="h-3.5 w-3.5" /> Login
+            </Link>
+          )}
         </div>
       </div>
     </header>
