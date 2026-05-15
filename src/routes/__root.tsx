@@ -1,6 +1,9 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute, HeadContent, Scripts, useLocation, Navigate } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/use-auth";
 
 import appCss from "../styles.css?url";
+
+const PUBLIC_ROUTES = ["/", "/auth"];
 
 function NotFoundComponent() {
   return (
