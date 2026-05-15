@@ -18,6 +18,7 @@ import { Route as RssRouteImport } from './routes/rss'
 import { Route as RecommendationsRouteImport } from './routes/recommendations'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PredictionRouteImport } from './routes/prediction'
+import { Route as NewsRouteImport } from './routes/news'
 import { Route as MediaRouteImport } from './routes/media'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as ExportRouteImport } from './routes/export'
@@ -70,6 +71,11 @@ const PredictionRoute = PredictionRouteImport.update({
   path: '/prediction',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NewsRoute = NewsRouteImport.update({
+  id: '/news',
+  path: '/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MediaRoute = MediaRouteImport.update({
   id: '/media',
   path: '/media',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/export': typeof ExportRoute
   '/map': typeof MapRoute
   '/media': typeof MediaRoute
+  '/news': typeof NewsRoute
   '/prediction': typeof PredictionRoute
   '/profile': typeof ProfileRoute
   '/recommendations': typeof RecommendationsRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/export': typeof ExportRoute
   '/map': typeof MapRoute
   '/media': typeof MediaRoute
+  '/news': typeof NewsRoute
   '/prediction': typeof PredictionRoute
   '/profile': typeof ProfileRoute
   '/recommendations': typeof RecommendationsRoute
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/export': typeof ExportRoute
   '/map': typeof MapRoute
   '/media': typeof MediaRoute
+  '/news': typeof NewsRoute
   '/prediction': typeof PredictionRoute
   '/profile': typeof ProfileRoute
   '/recommendations': typeof RecommendationsRoute
@@ -162,6 +171,7 @@ export interface FileRouteTypes {
     | '/export'
     | '/map'
     | '/media'
+    | '/news'
     | '/prediction'
     | '/profile'
     | '/recommendations'
@@ -179,6 +189,7 @@ export interface FileRouteTypes {
     | '/export'
     | '/map'
     | '/media'
+    | '/news'
     | '/prediction'
     | '/profile'
     | '/recommendations'
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/export'
     | '/map'
     | '/media'
+    | '/news'
     | '/prediction'
     | '/profile'
     | '/recommendations'
@@ -214,6 +226,7 @@ export interface RootRouteChildren {
   ExportRoute: typeof ExportRoute
   MapRoute: typeof MapRoute
   MediaRoute: typeof MediaRoute
+  NewsRoute: typeof NewsRoute
   PredictionRoute: typeof PredictionRoute
   ProfileRoute: typeof ProfileRoute
   RecommendationsRoute: typeof RecommendationsRoute
@@ -290,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PredictionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/news': {
+      id: '/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof NewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/media': {
       id: '/media'
       path: '/media'
@@ -342,6 +362,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExportRoute: ExportRoute,
   MapRoute: MapRoute,
   MediaRoute: MediaRoute,
+  NewsRoute: NewsRoute,
   PredictionRoute: PredictionRoute,
   ProfileRoute: ProfileRoute,
   RecommendationsRoute: RecommendationsRoute,
@@ -355,12 +376,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

@@ -20,6 +20,7 @@ import {
   Map,
   FileBarChart,
   Rss,
+  Database,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import logo from "@/assets/propam-logo.png";
@@ -66,6 +67,7 @@ const navItems: NavGroup[] = [
     icon: Wrench,
     hasDropdown: true,
     items: [
+      { to: "/news", label: "News Database", desc: "Storage seluruh berita real-time", icon: Database },
       { to: "/rss", label: "Keyword & RSS Manager", desc: "Kelola RSS feed & keyword", icon: Rss },
       { to: "/map", label: "Peta Indonesia", desc: "Distribusi sentiment geografis", icon: Map },
       { to: "/export", label: "Export Report", desc: "Generate laporan WhatsApp", icon: FileBarChart },
