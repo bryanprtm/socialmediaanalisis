@@ -81,6 +81,8 @@ const navItems: NavGroup[] = [
 
 export function TopNav() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
 
@@ -93,6 +95,12 @@ export function TopNav() {
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    toast.success("Logout berhasil");
+    navigate({ to: "/" });
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/85 backdrop-blur-xl">
