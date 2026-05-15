@@ -14,7 +14,143 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      news_articles: {
+        Row: {
+          author: string | null
+          category: string | null
+          confidence: number | null
+          content: string | null
+          created_at: string
+          excerpt: string | null
+          feed_id: string | null
+          fetched_at: string
+          id: string
+          image_url: string | null
+          keywords: string[] | null
+          language: string | null
+          published_at: string | null
+          region: string | null
+          sentiment: Database["public"]["Enums"]["sentiment_type"] | null
+          sentiment_score: number | null
+          source: string
+          title: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          author?: string | null
+          category?: string | null
+          confidence?: number | null
+          content?: string | null
+          created_at?: string
+          excerpt?: string | null
+          feed_id?: string | null
+          fetched_at?: string
+          id?: string
+          image_url?: string | null
+          keywords?: string[] | null
+          language?: string | null
+          published_at?: string | null
+          region?: string | null
+          sentiment?: Database["public"]["Enums"]["sentiment_type"] | null
+          sentiment_score?: number | null
+          source: string
+          title: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          author?: string | null
+          category?: string | null
+          confidence?: number | null
+          content?: string | null
+          created_at?: string
+          excerpt?: string | null
+          feed_id?: string | null
+          fetched_at?: string
+          id?: string
+          image_url?: string | null
+          keywords?: string[] | null
+          language?: string | null
+          published_at?: string | null
+          region?: string | null
+          sentiment?: Database["public"]["Enums"]["sentiment_type"] | null
+          sentiment_score?: number | null
+          source?: string
+          title?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_articles_feed_id_fkey"
+            columns: ["feed_id"]
+            isOneToOne: false
+            referencedRelation: "rss_feeds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rss_feeds: {
+        Row: {
+          category: string | null
+          created_at: string
+          health_score: number
+          id: string
+          last_synced_at: string | null
+          name: string
+          status: Database["public"]["Enums"]["feed_status"]
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          health_score?: number
+          id?: string
+          last_synced_at?: string | null
+          name: string
+          status?: Database["public"]["Enums"]["feed_status"]
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          health_score?: number
+          id?: string
+          last_synced_at?: string | null
+          name?: string
+          status?: Database["public"]["Enums"]["feed_status"]
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      tracked_keywords: {
+        Row: {
+          alert_enabled: boolean
+          created_at: string
+          id: string
+          keyword: string
+          mention_count: number
+        }
+        Insert: {
+          alert_enabled?: boolean
+          created_at?: string
+          id?: string
+          keyword: string
+          mention_count?: number
+        }
+        Update: {
+          alert_enabled?: boolean
+          created_at?: string
+          id?: string
+          keyword?: string
+          mention_count?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +159,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      feed_status: "active" | "warning" | "error" | "paused"
+      sentiment_type: "positive" | "negative" | "neutral"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +287,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      feed_status: ["active", "warning", "error", "paused"],
+      sentiment_type: ["positive", "negative", "neutral"],
+    },
   },
 } as const
