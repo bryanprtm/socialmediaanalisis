@@ -111,7 +111,7 @@ export function TopNav() {
         </Link>
 
         <nav ref={navRef} className="hidden items-center gap-1 md:flex">
-          {navItems.map((item) => {
+          {(isAuthenticated ? navItems : navItems.filter((i) => i.to === "/")).map((item) => {
             const Icon = item.icon;
             const isActive = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
             const allMatch =
