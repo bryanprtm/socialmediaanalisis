@@ -1,6 +1,9 @@
-import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute, HeadContent, Scripts, useLocation, Navigate } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/use-auth";
 
 import appCss from "../styles.css?url";
+
+const PUBLIC_ROUTES = ["/", "/auth"];
 
 function NotFoundComponent() {
   return (
@@ -81,5 +84,13 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  const { pathname } = useLocation();
+  const { isAuthenticated, loading } = useAuth();
+  const isPublic = PUBLIC_ROUTES.includes(pathname);
+
+  if (!isPublic && !loading && !isAuthenticated) {
+    return <Navigate to="/auth" />;
+  }
+
   return <Outlet />;
 }
