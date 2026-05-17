@@ -62,8 +62,8 @@ function Page() {
       }>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Total Nodes" value="40" accent="cyan" icon={<Network className="h-5 w-5" />} />
-        <MetricCard label="Total Connections" value="127" accent="success" icon={<Network className="h-5 w-5" />} />
+        <MetricCard label="Total Nodes" value={String(visibleNodes.length)} accent="cyan" icon={<Network className="h-5 w-5" />} />
+        <MetricCard label="Total Connections" value={String(visibleLinks.length)} accent="success" icon={<Network className="h-5 w-5" />} />
         <MetricCard label="Network Density" value="16.3%" accent="violet" icon={<Network className="h-5 w-5" />} />
         <MetricCard label="Avg Clustering" value="74.2%" accent="amber" icon={<Network className="h-5 w-5" />} />
       </div>
