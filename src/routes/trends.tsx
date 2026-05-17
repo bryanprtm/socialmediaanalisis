@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, Panel, MetricCard, Bar, Pill } from "@/components/PageShell";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
-import { Search, TrendingUp, Hash, Filter, Bell, RefreshCw, Flame, Sparkles, Activity, BarChart3 } from "lucide-react";
+import { TrendingUp, Hash, Bell, RefreshCw, Flame, Sparkles, Activity, BarChart3 } from "lucide-react";
+import { useActiveKeyword } from "@/hooks/use-active-keyword";
+import { evalExpression } from "@/lib/keyword-query";
 
 export const Route = createFileRoute("/trends")({
   head: () => ({
@@ -38,6 +40,10 @@ const emerging = [
 ];
 
 function TrendsPage() {
+  const { active } = useActiveKeyword();
+  const matches = (text: string) => !active || evalExpression(active.expression, text);
+  const filteredTrending = trending.filter((t) => matches([t.name, ...t.tags].join(" ")));
+  const filteredEmerging = emerging.filter((e) => matches(e.name));
   return (
     <PageShell
       eyebrow="Real-time Pulse"
@@ -48,36 +54,22 @@ function TrendsPage() {
           <select className="rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground">
             <option>24 Jam</option><option>7 Hari</option><option>30 Hari</option>
           </select>
-          <select className="rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground">
-            <option>Semua Kategori</option><option>Politik</option><option>Ekonomi</option>
-          </select>
           <button className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-cyan px-4 py-2 text-xs font-semibold text-background shadow-[0_0_24px_-8px_oklch(0.78_0.18_195_/_0.7)]">
             <RefreshCw className="h-3.5 w-3.5" /> Auto Refresh
+          </button>
+          <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-4 py-2 text-xs font-semibold text-foreground hover:border-primary/40">
+            <Bell className="h-3.5 w-3.5" /> Set Alert
           </button>
         </>
       }
     >
-      <div className="flex flex-col gap-3 lg:flex-row">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            placeholder="Cari topik atau kata kunci…"
-            className="w-full rounded-lg border border-border bg-panel py-2.5 pl-10 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-          />
-        </div>
-        <select className="rounded-lg border border-border bg-panel px-4 py-2.5 text-sm text-foreground"><option>Overview</option></select>
-        <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-4 py-2.5 text-sm font-semibold text-foreground hover:border-primary/40">
-          <Filter className="h-4 w-4" /> Filter Lanjutan
-        </button>
-        <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-4 py-2.5 text-sm font-semibold text-foreground hover:border-primary/40">
-          <Bell className="h-4 w-4" /> Set Alert
-        </button>
-      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-3">
         <Panel title="Topik Trending Hari Ini" icon={<Flame className="h-4 w-4" />}>
           <ul className="space-y-3">
-            {trending.map((t) => (
+            {filteredTrending.length === 0 ? (
+              <li className="py-6 text-center text-xs text-muted-foreground">Tidak ada topik cocok</li>
+            ) : filteredTrending.map((t) => (
               <li key={t.rank} className="rounded-lg border border-border bg-panel-elevated p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -136,7 +128,9 @@ function TrendsPage() {
 
       <Panel className="mt-6" title="Topik Emerging" icon={<Sparkles className="h-4 w-4" />}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {emerging.map((e) => (
+          {filteredEmerging.length === 0 ? (
+            <p className="col-span-full py-6 text-center text-xs text-muted-foreground">Tidak ada topik emerging cocok</p>
+          ) : filteredEmerging.map((e) => (
             <div key={e.name} className="rounded-lg border border-border bg-panel-elevated p-4">
               <p className="text-sm font-semibold text-foreground">{e.name}</p>
               <p className="font-mono text-[11px] text-muted-foreground">{e.mentions} mentions</p>

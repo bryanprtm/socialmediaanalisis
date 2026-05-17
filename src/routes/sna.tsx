@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
 import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { Network, Play, RefreshCw, Filter, Maximize, Download, Search, Eye, Settings } from "lucide-react";
+import { Network, Play, RefreshCw, Maximize, Download, Eye, Settings } from "lucide-react";
+import { useActiveKeyword } from "@/hooks/use-active-keyword";
+import { evalExpression } from "@/lib/keyword-query";
 
 export const Route = createFileRoute("/sna")({
   head: () => ({ meta: [{ title: "SNA Visualization — PROPAM" }, { name: "description", content: "Social Network Analysis untuk memahami pola komunikasi." }] }),
@@ -41,27 +43,27 @@ const pagerank = [
 function nodeById(id: string) { return nodes.find((n) => n.id === id)!; }
 
 function Page() {
+  const { active } = useActiveKeyword();
+  const matches = (t: string) => !active || evalExpression(active.expression, t);
+  const filteredBetween = between.filter((b) => matches(b.name));
+  const filteredPagerank = pagerank.filter((p) => matches(p.name));
+  const visibleNodes = active ? nodes.filter((n) => matches(n.id)) : nodes;
+  const visibleLinks = active ? links.filter(([a, b]) => matches(a) && matches(b)) : links;
   return (
-    <PageShell eyebrow="Network Topology" title="Visualisasi Jaringan SNA" description="Analisis Social Network Analysis untuk memahami pola komunikasi dan pengaruh."
+    <PageShell eyebrow="Network Topology" title="Visualisasi Jaringan SNA" description="Analisis Social Network Analysis tersaring berdasarkan kata kunci aktif."
       actions={
         <>
           <select className="rounded-lg border border-border bg-panel px-3 py-2 text-xs text-foreground"><option>Jaringan Sosial</option></select>
           <button className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-cyan px-3 py-2 text-xs font-semibold text-background"><Play className="h-3.5 w-3.5" /> Simulate</button>
           <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40"><RefreshCw className="h-3.5 w-3.5" /> Refresh</button>
+          <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40"><Maximize className="h-3.5 w-3.5" /> Fullscreen</button>
+          <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40"><Download className="h-3.5 w-3.5" /> Export</button>
         </>
       }>
-      <div className="flex flex-col gap-3 lg:flex-row">
-        <div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input placeholder="Cari node dalam jaringan…" className="w-full rounded-lg border border-border bg-panel py-2.5 pl-10 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" /></div>
-        <select className="rounded-lg border border-border bg-panel px-4 py-2.5 text-sm text-foreground"><option>Betweenness</option></select>
-        <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-4 py-2.5 text-sm text-foreground"><Filter className="h-4 w-4" /> Filter</button>
-        <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-4 py-2.5 text-sm text-foreground"><Maximize className="h-4 w-4" /> Fullscreen</button>
-        <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-4 py-2.5 text-sm text-foreground"><Download className="h-4 w-4" /> Export</button>
-      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Total Nodes" value="40" accent="cyan" icon={<Network className="h-5 w-5" />} />
-        <MetricCard label="Total Connections" value="127" accent="success" icon={<Network className="h-5 w-5" />} />
+        <MetricCard label="Total Nodes" value={String(visibleNodes.length)} accent="cyan" icon={<Network className="h-5 w-5" />} />
+        <MetricCard label="Total Connections" value={String(visibleLinks.length)} accent="success" icon={<Network className="h-5 w-5" />} />
         <MetricCard label="Network Density" value="16.3%" accent="violet" icon={<Network className="h-5 w-5" />} />
         <MetricCard label="Avg Clustering" value="74.2%" accent="amber" icon={<Network className="h-5 w-5" />} />
       </div>
@@ -69,11 +71,11 @@ function Page() {
       <Panel className="mt-6" title="Jaringan Sosial" icon={<Network className="h-4 w-4" />} action={<Pill tone="info">Force-Directed</Pill>}>
         <div className="relative h-96 overflow-hidden rounded-xl bg-black/40 grid-bg">
           <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid meet">
-            {links.map(([a, b], i) => {
+            {visibleLinks.map(([a, b], i) => {
               const A = nodeById(a), B = nodeById(b);
               return <line key={i} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke="oklch(1 0 0 / 0.2)" strokeWidth="0.3" />;
             })}
-            {nodes.map((n) => (
+            {visibleNodes.map((n) => (
               <g key={n.id}>
                 <circle cx={n.x} cy={n.y} r={n.size / 6} fill={n.color} opacity={0.25} />
                 <circle cx={n.x} cy={n.y} r={n.size / 10} fill={n.color} stroke="oklch(0.18 0.03 252)" strokeWidth="0.3" />
@@ -107,7 +109,7 @@ function Page() {
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
         <Panel title="Betweenness Centrality">
           <ul className="space-y-2">
-            {between.map((b) => (
+            {filteredBetween.length === 0 ? <li className="py-4 text-center text-xs text-muted-foreground">Tidak ada node cocok</li> : filteredBetween.map((b) => (
               <li key={b.n} className="flex items-center justify-between rounded-lg border border-border bg-panel-elevated p-3">
                 <div className="flex items-center gap-3">
                   <span className="grid h-7 w-7 place-items-center rounded-md bg-primary/15 font-mono text-xs font-bold text-primary">{b.n}</span>
@@ -120,7 +122,7 @@ function Page() {
         </Panel>
         <Panel title="PageRank Scores">
           <ul className="space-y-2">
-            {pagerank.map((p) => (
+            {filteredPagerank.length === 0 ? <li className="py-4 text-center text-xs text-muted-foreground">Tidak ada node cocok</li> : filteredPagerank.map((p) => (
               <li key={p.n} className="flex items-center justify-between rounded-lg border border-border bg-panel-elevated p-3">
                 <div className="flex items-center gap-3"><span className="grid h-7 w-7 place-items-center rounded-md bg-success/15 font-mono text-xs font-bold text-success">{p.n}</span>
                   <p className="text-sm font-semibold text-foreground">{p.name}</p></div>

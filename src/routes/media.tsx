@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, Panel, MetricCard, Bar, Pill } from "@/components/PageShell";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
-import { Search, Filter, Download, Settings, Globe, RefreshCw, ShieldCheck, Activity, Users, ArrowUp, ArrowDown } from "lucide-react";
+import { Download, Settings, Globe, RefreshCw, ShieldCheck, Activity, Users, ArrowUp, ArrowDown } from "lucide-react";
+import { useActiveKeyword } from "@/hooks/use-active-keyword";
+import { evalExpression } from "@/lib/keyword-query";
 
 export const Route = createFileRoute("/media")({
   head: () => ({
@@ -44,29 +46,24 @@ const bias = [
 ];
 
 function MediaPage() {
+  const { active } = useActiveKeyword();
+  const filteredSources = active
+    ? sources.filter((s) => evalExpression(active.expression, [s.name, s.cat].join(" ")))
+    : sources;
   return (
     <PageShell
       eyebrow="Source Intelligence"
       title="Analisis Media"
-      description="Monitoring kredibilitas, sentiment, dan performa sumber media secara real-time."
+      description="Monitoring kredibilitas, sentiment, dan performa sumber media. Hasil tersaring berdasarkan kata kunci aktif."
       actions={
         <>
           <select className="rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground"><option>24 Jam</option><option>7 Hari</option></select>
-          <select className="rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground"><option>Semua Kategori</option></select>
+          <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40"><Download className="h-3.5 w-3.5" /> Export</button>
+          <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40"><Settings className="h-3.5 w-3.5" /> Konfigurasi</button>
           <button className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-xs font-semibold text-background"><RefreshCw className="h-3.5 w-3.5" /> Auto Refresh</button>
         </>
       }
     >
-      <div className="flex flex-col gap-3 lg:flex-row">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input placeholder="Cari sumber media…" className="w-full rounded-lg border border-border bg-panel py-2.5 pl-10 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" />
-        </div>
-        <select className="rounded-lg border border-border bg-panel px-4 py-2.5 text-sm text-foreground"><option>Kredibilitas</option></select>
-        <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-4 py-2.5 text-sm font-semibold text-foreground hover:border-primary/40"><Filter className="h-4 w-4" /> Filter Lanjutan</button>
-        <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-4 py-2.5 text-sm font-semibold text-foreground hover:border-primary/40"><Download className="h-4 w-4" /> Export</button>
-        <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-4 py-2.5 text-sm font-semibold text-foreground hover:border-primary/40"><Settings className="h-4 w-4" /> Konfigurasi</button>
-      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="Total Artikel" value="1,096" accent="cyan" icon={<Activity className="h-5 w-5" />} delta="last 24h" />
@@ -75,7 +72,7 @@ function MediaPage() {
         <MetricCard label="Total Jangkauan" value="73.8M" accent="amber" icon={<Users className="h-5 w-5" />} delta="reach impressions" />
       </div>
 
-      <Panel className="mt-6" title="Sumber Media & Kredibilitas" icon={<Globe className="h-4 w-4" />} action={<Pill tone="info">{sources.length} Sources</Pill>}>
+      <Panel className="mt-6" title="Sumber Media & Kredibilitas" icon={<Globe className="h-4 w-4" />} action={<Pill tone="info">{filteredSources.length} of {sources.length} Sources</Pill>}>
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead>
@@ -90,7 +87,9 @@ function MediaPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {sources.map((s, i) => (
+              {filteredSources.length === 0 ? (
+                <tr><td colSpan={7} className="py-6 text-center text-xs text-muted-foreground">Tidak ada sumber cocok dengan kata kunci aktif</td></tr>
+              ) : filteredSources.map((s, i) => (
                 <tr key={i} className="hover:bg-panel-elevated/60">
                   <td className="py-3 pr-4">
                     <div className="flex items-center gap-2.5">
