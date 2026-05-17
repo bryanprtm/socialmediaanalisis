@@ -1,7 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
 import { ResponsiveContainer, BarChart, Bar as RBar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { Search, Filter, Calendar, Globe, FileText, TrendingUp, ExternalLink, Bookmark } from "lucide-react";
+import { Globe, FileText, TrendingUp, ExternalLink, KeyRound, Sparkles } from "lucide-react";
+import { useActiveKeyword } from "@/hooks/use-active-keyword";
+import { evalExpression } from "@/lib/keyword-query";
 
 export const Route = createFileRoute("/search")({
   head: () => ({
@@ -75,63 +77,43 @@ const sources = [
 ];
 
 function Page() {
+  const { active } = useActiveKeyword();
+  const filteredResults = active
+    ? results.filter((r) => evalExpression(active.expression, [r.title, r.excerpt, r.src, r.cat].join(" ")))
+    : results;
+  const filteredSources = active
+    ? sources.filter((s) => evalExpression(active.expression, s.n))
+    : sources;
   return (
     <PageShell
       eyebrow="Search Intelligence"
       title="Pencarian & Monitoring"
-      description="Real-time search engine untuk pantau keyword, sumber, dan sentiment berita di seluruh Indonesia."
-      actions={
-        <>
-          <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40">
-            <Bookmark className="h-3.5 w-3.5" /> Saved Searches
-          </button>
-          <button className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-cyan px-4 py-2 text-xs font-semibold text-background">
-            <Filter className="h-3.5 w-3.5" /> Advanced Filter
-          </button>
-        </>
-      }
+      description="Hasil pencarian disaring berdasarkan kata kunci aktif. Kelola kata kunci di halaman Kata Kunci Pencarian."
     >
       <Panel>
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="search"
-              placeholder="Cari keyword, topik, atau frasa…  (contoh: ekonomi inflasi, kebijakan kesehatan)"
-              className="h-11 w-full rounded-lg border border-border bg-panel-elevated pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none"
-            />
+        {active ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span className="text-sm font-semibold text-foreground">Query aktif:</span>
+            <span className="text-sm text-foreground">{active.name}</span>
+            <code className="rounded-md border border-primary/30 bg-panel-elevated px-2 py-0.5 font-mono text-xs text-primary">
+              {active.expression}
+            </code>
+            <span className="ml-auto font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              {filteredResults.length} hasil cocok
+            </span>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <select className="h-11 rounded-lg border border-border bg-panel-elevated px-3 text-xs text-foreground">
-              <option>Semua Kategori</option>
-              <option>Politik</option>
-              <option>Ekonomi</option>
-              <option>Kesehatan</option>
-              <option>Teknologi</option>
-            </select>
-            <select className="h-11 rounded-lg border border-border bg-panel-elevated px-3 text-xs text-foreground">
-              <option>Semua Sentiment</option>
-              <option>Positif</option>
-              <option>Negatif</option>
-              <option>Netral</option>
-            </select>
-            <button className="inline-flex h-11 items-center gap-1.5 rounded-lg border border-border bg-panel-elevated px-3 text-xs text-foreground">
-              <Calendar className="h-3.5 w-3.5" /> 7 Hari
-            </button>
-            <button className="inline-flex h-11 items-center gap-1.5 rounded-lg bg-gradient-cyan px-5 text-xs font-semibold text-background">
-              <Search className="h-4 w-4" /> Search
-            </button>
+        ) : (
+          <div className="flex flex-wrap items-center gap-3">
+            <KeyRound className="h-4 w-4 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              Belum ada kata kunci aktif. Pilih query di dropdown TopNav atau{" "}
+              <Link to="/keywords" className="text-primary hover:underline">tambahkan di halaman Kata Kunci →</Link>
+            </p>
           </div>
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Trending:</span>
-          {["pemilu 2024", "subsidi BBM", "inflasi", "IKN", "BPJS", "blockchain"].map((t) => (
-            <button key={t} className="rounded-full border border-border bg-panel-elevated px-3 py-1 text-xs text-foreground hover:border-primary/40">
-              #{t}
-            </button>
-          ))}
-        </div>
+        )}
       </Panel>
+
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="Hasil Ditemukan" value="2,369" delta="+18%" deltaTone="up" icon={<FileText className="h-5 w-5" />} accent="cyan" />
