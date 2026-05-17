@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, Panel, MetricCard, Bar, Pill } from "@/components/PageShell";
 import { ResponsiveContainer, BarChart, Bar as RBar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from "recharts";
-import { Calendar, Zap, Search, Filter, Brain, Target, Activity, Hash, Newspaper } from "lucide-react";
+import { Calendar, Zap, Brain, Target, Activity, Hash, Newspaper } from "lucide-react";
+import { useActiveKeyword } from "@/hooks/use-active-keyword";
+import { evalExpression } from "@/lib/keyword-query";
 
 export const Route = createFileRoute("/sentiment")({
   head: () => ({
@@ -49,11 +51,15 @@ const sources = [
 ];
 
 function SentimentPage() {
+  const { active } = useActiveKeyword();
+  const matches = (t: string) => !active || evalExpression(active.expression, t);
+  const filteredKeywords = keywords.filter((k) => matches(k.k));
+  const filteredSources = sources.filter((s) => matches(s.name));
   return (
     <PageShell
       eyebrow="AI Module · v3.1"
       title="Analisis Sentiment"
-      description="Dashboard komprehensif untuk analisis sentiment berita dan media sosial."
+      description="Dashboard sentiment berita. Disaring berdasarkan kata kunci aktif."
       actions={
         <>
           <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40">
@@ -65,24 +71,6 @@ function SentimentPage() {
         </>
       }
     >
-      <div className="flex flex-col gap-3 lg:flex-row">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            placeholder="Masukkan kata kunci untuk analisis…"
-            className="w-full rounded-lg border border-border bg-panel py-2.5 pl-10 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-          />
-        </div>
-        <select className="rounded-lg border border-border bg-panel px-4 py-2.5 text-sm text-foreground focus:outline-none">
-          <option>7 Hari</option><option>30 Hari</option><option>90 Hari</option>
-        </select>
-        <select className="rounded-lg border border-border bg-panel px-4 py-2.5 text-sm text-foreground focus:outline-none">
-          <option>Semua Kategori</option><option>Politik</option><option>Ekonomi</option>
-        </select>
-        <button className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-5 py-2.5 text-sm font-semibold text-background">
-          <Filter className="h-4 w-4" /> Filter
-        </button>
-      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="Total Artikel" value="1,247" delta="+12% dari minggu lalu" deltaTone="up" accent="cyan" icon={<Newspaper className="h-5 w-5" />} />
@@ -199,7 +187,7 @@ function SentimentPage() {
       <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Panel title="Keyword dengan Sentiment Tertinggi" icon={<Hash className="h-4 w-4" />}>
           <ul className="space-y-2">
-            {keywords.map((k) => (
+            {filteredKeywords.length === 0 ? <li className="py-4 text-center text-xs text-muted-foreground">Tidak ada keyword cocok</li> : filteredKeywords.map((k) => (
               <li key={k.k} className="flex items-center justify-between rounded-lg border border-border bg-panel-elevated px-3 py-2.5">
                 <div className="flex items-center gap-3">
                   <span className="rounded-md bg-primary/15 px-2 py-0.5 font-mono text-[10px] font-bold text-primary">#{k.n}</span>
@@ -216,7 +204,7 @@ function SentimentPage() {
 
         <Panel title="Sentiment per Sumber Media" icon={<Newspaper className="h-4 w-4" />}>
           <ul className="space-y-3">
-            {sources.map((s) => (
+            {filteredSources.length === 0 ? <li className="py-4 text-center text-xs text-muted-foreground">Tidak ada sumber cocok</li> : filteredSources.map((s) => (
               <li key={s.code} className="rounded-lg border border-border bg-panel-elevated p-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-foreground">{s.name}</span>
