@@ -1,5 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts, useLocation, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
+import { ActiveKeywordProvider } from "@/hooks/use-active-keyword";
 
 import appCss from "../styles.css?url";
 
@@ -92,5 +93,9 @@ function RootComponent() {
     return <Navigate to="/auth" />;
   }
 
-  return <Outlet />;
+  return (
+    <ActiveKeywordProvider>
+      <Outlet />
+    </ActiveKeywordProvider>
+  );
 }
