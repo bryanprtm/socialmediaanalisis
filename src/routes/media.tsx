@@ -72,7 +72,7 @@ function MediaPage() {
         <MetricCard label="Total Jangkauan" value="73.8M" accent="amber" icon={<Users className="h-5 w-5" />} delta="reach impressions" />
       </div>
 
-      <Panel className="mt-6" title="Sumber Media & Kredibilitas" icon={<Globe className="h-4 w-4" />} action={<Pill tone="info">{sources.length} Sources</Pill>}>
+      <Panel className="mt-6" title="Sumber Media & Kredibilitas" icon={<Globe className="h-4 w-4" />} action={<Pill tone="info">{filteredSources.length} of {sources.length} Sources</Pill>}>
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead>
@@ -87,7 +87,9 @@ function MediaPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {sources.map((s, i) => (
+              {filteredSources.length === 0 ? (
+                <tr><td colSpan={7} className="py-6 text-center text-xs text-muted-foreground">Tidak ada sumber cocok dengan kata kunci aktif</td></tr>
+              ) : filteredSources.map((s, i) => (
                 <tr key={i} className="hover:bg-panel-elevated/60">
                   <td className="py-3 pr-4">
                     <div className="flex items-center gap-2.5">
