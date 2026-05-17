@@ -67,7 +67,9 @@ function TrendsPage() {
       <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-3">
         <Panel title="Topik Trending Hari Ini" icon={<Flame className="h-4 w-4" />}>
           <ul className="space-y-3">
-            {trending.map((t) => (
+            {filteredTrending.length === 0 ? (
+              <li className="py-6 text-center text-xs text-muted-foreground">Tidak ada topik cocok</li>
+            ) : filteredTrending.map((t) => (
               <li key={t.rank} className="rounded-lg border border-border bg-panel-elevated p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -126,7 +128,9 @@ function TrendsPage() {
 
       <Panel className="mt-6" title="Topik Emerging" icon={<Sparkles className="h-4 w-4" />}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {emerging.map((e) => (
+          {filteredEmerging.length === 0 ? (
+            <p className="col-span-full py-6 text-center text-xs text-muted-foreground">Tidak ada topik emerging cocok</p>
+          ) : filteredEmerging.map((e) => (
             <div key={e.name} className="rounded-lg border border-border bg-panel-elevated p-4">
               <p className="text-sm font-semibold text-foreground">{e.name}</p>
               <p className="font-mono text-[11px] text-muted-foreground">{e.mentions} mentions</p>
