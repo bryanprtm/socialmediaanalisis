@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 import appCss from "../styles.css?url";
 
-const PUBLIC_ROUTES = ["/", "/auth"];
+const PUBLIC_ROUTES = ["/auth"];
 
 function NotFoundComponent() {
   return (
