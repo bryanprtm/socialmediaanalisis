@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
 import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-import { Network, Play, RefreshCw, Filter, Maximize, Download, Search, Eye, Settings } from "lucide-react";
+import { Network, Play, RefreshCw, Maximize, Download, Eye, Settings } from "lucide-react";
+import { useActiveKeyword } from "@/hooks/use-active-keyword";
+import { evalExpression } from "@/lib/keyword-query";
 
 export const Route = createFileRoute("/sna")({
   head: () => ({ meta: [{ title: "SNA Visualization — PROPAM" }, { name: "description", content: "Social Network Analysis untuk memahami pola komunikasi." }] }),
@@ -41,23 +43,23 @@ const pagerank = [
 function nodeById(id: string) { return nodes.find((n) => n.id === id)!; }
 
 function Page() {
+  const { active } = useActiveKeyword();
+  const matches = (t: string) => !active || evalExpression(active.expression, t);
+  const filteredBetween = between.filter((b) => matches(b.name));
+  const filteredPagerank = pagerank.filter((p) => matches(p.name));
+  const visibleNodes = active ? nodes.filter((n) => matches(n.id)) : nodes;
+  const visibleLinks = active ? links.filter(([a, b]) => matches(a) && matches(b)) : links;
   return (
-    <PageShell eyebrow="Network Topology" title="Visualisasi Jaringan SNA" description="Analisis Social Network Analysis untuk memahami pola komunikasi dan pengaruh."
+    <PageShell eyebrow="Network Topology" title="Visualisasi Jaringan SNA" description="Analisis Social Network Analysis tersaring berdasarkan kata kunci aktif."
       actions={
         <>
           <select className="rounded-lg border border-border bg-panel px-3 py-2 text-xs text-foreground"><option>Jaringan Sosial</option></select>
           <button className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-cyan px-3 py-2 text-xs font-semibold text-background"><Play className="h-3.5 w-3.5" /> Simulate</button>
           <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40"><RefreshCw className="h-3.5 w-3.5" /> Refresh</button>
+          <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40"><Maximize className="h-3.5 w-3.5" /> Fullscreen</button>
+          <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40"><Download className="h-3.5 w-3.5" /> Export</button>
         </>
       }>
-      <div className="flex flex-col gap-3 lg:flex-row">
-        <div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input placeholder="Cari node dalam jaringan…" className="w-full rounded-lg border border-border bg-panel py-2.5 pl-10 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none" /></div>
-        <select className="rounded-lg border border-border bg-panel px-4 py-2.5 text-sm text-foreground"><option>Betweenness</option></select>
-        <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-4 py-2.5 text-sm text-foreground"><Filter className="h-4 w-4" /> Filter</button>
-        <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-4 py-2.5 text-sm text-foreground"><Maximize className="h-4 w-4" /> Fullscreen</button>
-        <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-4 py-2.5 text-sm text-foreground"><Download className="h-4 w-4" /> Export</button>
-      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="Total Nodes" value="40" accent="cyan" icon={<Network className="h-5 w-5" />} />
