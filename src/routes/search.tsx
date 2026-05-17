@@ -116,8 +116,8 @@ function Page() {
 
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Hasil Ditemukan" value="2,369" delta="+18%" deltaTone="up" icon={<FileText className="h-5 w-5" />} accent="cyan" />
-        <MetricCard label="Sumber Aktif" value="42" delta="+5 baru" deltaTone="up" icon={<Globe className="h-5 w-5" />} accent="violet" />
+        <MetricCard label="Hasil Ditemukan" value={String(filteredResults.length)} delta={active ? "Filtered" : "All"} deltaTone="up" icon={<FileText className="h-5 w-5" />} accent="cyan" />
+        <MetricCard label="Sumber Aktif" value={String(filteredSources.length)} delta={active ? "Filtered" : "All"} deltaTone="up" icon={<Globe className="h-5 w-5" />} accent="violet" />
         <MetricCard label="Sentiment Score" value="72%" delta="+4.1%" deltaTone="up" icon={<TrendingUp className="h-5 w-5" />} accent="success" />
         <MetricCard label="Avg Confidence" value="0.89" hint="ML model rating" icon={<TrendingUp className="h-5 w-5" />} accent="amber" />
       </div>
@@ -141,7 +141,9 @@ function Page() {
 
         <Panel title="Top Sumber" icon={<Globe className="h-4 w-4" />}>
           <ul className="space-y-3">
-            {sources.map((s) => (
+            {filteredSources.length === 0 ? (
+              <li className="py-6 text-center text-xs text-muted-foreground">Tidak ada sumber cocok</li>
+            ) : filteredSources.map((s) => (
               <li key={s.n} className="rounded-lg border border-border bg-panel-elevated p-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-foreground">{s.n}</span>
@@ -157,9 +159,12 @@ function Page() {
         </Panel>
       </div>
 
-      <Panel className="mt-6" title="Hasil Pencarian" icon={<FileText className="h-4 w-4" />} action={<span className="font-mono text-xs text-muted-foreground">Showing 4 of 2,369</span>}>
+      <Panel className="mt-6" title="Hasil Pencarian" icon={<FileText className="h-4 w-4" />} action={<span className="font-mono text-xs text-muted-foreground">Showing {filteredResults.length} of {results.length}</span>}>
+        {filteredResults.length === 0 ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">Tidak ada hasil cocok dengan kata kunci aktif.</div>
+        ) : (
         <ul className="divide-y divide-border">
-          {results.map((r) => (
+          {filteredResults.map((r) => (
             <li key={r.title} className="group py-4 first:pt-0 last:pb-0">
               <div className="flex items-start gap-4">
                 <div className="hidden sm:block">
@@ -190,6 +195,7 @@ function Page() {
             </li>
           ))}
         </ul>
+        )}
       </Panel>
     </PageShell>
   );
