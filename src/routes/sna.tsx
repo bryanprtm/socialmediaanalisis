@@ -71,11 +71,11 @@ function Page() {
       <Panel className="mt-6" title="Jaringan Sosial" icon={<Network className="h-4 w-4" />} action={<Pill tone="info">Force-Directed</Pill>}>
         <div className="relative h-96 overflow-hidden rounded-xl bg-black/40 grid-bg">
           <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMid meet">
-            {links.map(([a, b], i) => {
+            {visibleLinks.map(([a, b], i) => {
               const A = nodeById(a), B = nodeById(b);
               return <line key={i} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke="oklch(1 0 0 / 0.2)" strokeWidth="0.3" />;
             })}
-            {nodes.map((n) => (
+            {visibleNodes.map((n) => (
               <g key={n.id}>
                 <circle cx={n.x} cy={n.y} r={n.size / 6} fill={n.color} opacity={0.25} />
                 <circle cx={n.x} cy={n.y} r={n.size / 10} fill={n.color} stroke="oklch(0.18 0.03 252)" strokeWidth="0.3" />
@@ -109,7 +109,7 @@ function Page() {
       <div className="mt-6 grid gap-5 lg:grid-cols-2">
         <Panel title="Betweenness Centrality">
           <ul className="space-y-2">
-            {between.map((b) => (
+            {filteredBetween.length === 0 ? <li className="py-4 text-center text-xs text-muted-foreground">Tidak ada node cocok</li> : filteredBetween.map((b) => (
               <li key={b.n} className="flex items-center justify-between rounded-lg border border-border bg-panel-elevated p-3">
                 <div className="flex items-center gap-3">
                   <span className="grid h-7 w-7 place-items-center rounded-md bg-primary/15 font-mono text-xs font-bold text-primary">{b.n}</span>
@@ -122,7 +122,7 @@ function Page() {
         </Panel>
         <Panel title="PageRank Scores">
           <ul className="space-y-2">
-            {pagerank.map((p) => (
+            {filteredPagerank.length === 0 ? <li className="py-4 text-center text-xs text-muted-foreground">Tidak ada node cocok</li> : filteredPagerank.map((p) => (
               <li key={p.n} className="flex items-center justify-between rounded-lg border border-border bg-panel-elevated p-3">
                 <div className="flex items-center gap-3"><span className="grid h-7 w-7 place-items-center rounded-md bg-success/15 font-mono text-xs font-bold text-success">{p.n}</span>
                   <p className="text-sm font-semibold text-foreground">{p.name}</p></div>
