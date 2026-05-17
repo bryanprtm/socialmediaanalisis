@@ -22,9 +22,12 @@ import {
   FileBarChart,
   Rss,
   Database,
+  KeyRound,
+  Sparkles,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useActiveKeyword } from "@/hooks/use-active-keyword";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logo from "@/assets/propam-logo.png";
@@ -72,7 +75,8 @@ const navItems: NavGroup[] = [
     hasDropdown: true,
     items: [
       { to: "/news", label: "News Database", desc: "Storage seluruh berita real-time", icon: Database },
-      { to: "/rss", label: "Keyword & RSS Manager", desc: "Kelola RSS feed & keyword", icon: Rss },
+      { to: "/keywords", label: "Kata Kunci Pencarian", desc: "Boolean query: IF · AND · OR · NOT", icon: KeyRound },
+      { to: "/rss", label: "RSS Manager", desc: "Kelola RSS feed", icon: Rss },
       { to: "/map", label: "Peta Indonesia", desc: "Distribusi sentiment geografis", icon: Map },
       { to: "/export", label: "Export Report", desc: "Generate laporan WhatsApp", icon: FileBarChart },
     ],
@@ -83,8 +87,19 @@ export function TopNav() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
+  const { queries, active, setActiveId } = useActiveKeyword();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [kwOpen, setKwOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
+  const kwRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (kwRef.current && !kwRef.current.contains(e.target as Node)) setKwOpen(false);
+    }
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -181,6 +196,59 @@ export function TopNav() {
         </nav>
 
         <div className="flex items-center gap-1.5">
+          {isAuthenticated && (
+            <div ref={kwRef} className="relative hidden md:block">
+              <button
+                onClick={() => setKwOpen((v) => !v)}
+                className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+                  active ? "border-primary/40 bg-primary/10 text-primary" : "border-border bg-panel text-muted-foreground hover:text-foreground"
+                }`}
+                title="Pilih kata kunci pencarian aktif"
+              >
+                <KeyRound className="h-3.5 w-3.5" />
+                <span className="max-w-[140px] truncate">{active ? active.name : "Pilih Kata Kunci"}</span>
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${kwOpen ? "rotate-180" : ""}`} />
+              </button>
+              {kwOpen && (
+                <div className="absolute right-0 top-full mt-2 w-80 overflow-hidden rounded-xl border border-border bg-popover shadow-elevated">
+                  <div className="border-b border-border px-3 py-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Kata Kunci Pencarian Aktif
+                  </div>
+                  <div className="max-h-72 overflow-y-auto p-1.5">
+                    <button
+                      onClick={() => { setActiveId(null); setKwOpen(false); }}
+                      className={`flex w-full items-center gap-2 rounded-lg p-2.5 text-left transition ${!active ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+                    >
+                      <span className="text-sm">— Tidak ada filter —</span>
+                    </button>
+                    {queries.length === 0 ? (
+                      <div className="px-3 py-4 text-center text-xs text-muted-foreground">
+                        Belum ada kata kunci.
+                        <Link to="/keywords" onClick={() => setKwOpen(false)} className="mt-1 block text-primary hover:underline">Tambah sekarang →</Link>
+                      </div>
+                    ) : (
+                      queries.map((q) => (
+                        <button
+                          key={q.id}
+                          onClick={() => { setActiveId(q.id); setKwOpen(false); }}
+                          className={`flex w-full items-start gap-2 rounded-lg p-2.5 text-left transition ${active?.id === q.id ? "bg-primary/15 text-primary" : "text-foreground hover:bg-muted"}`}
+                        >
+                          <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold">{q.name}</p>
+                            <code className="block truncate font-mono text-[10px] text-muted-foreground">{q.expression}</code>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                  <Link to="/keywords" onClick={() => setKwOpen(false)} className="block border-t border-border px-3 py-2 text-center text-xs font-semibold text-primary hover:bg-muted">
+                    Kelola Kata Kunci →
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
           <div className="hidden items-center gap-2 rounded-lg border border-border bg-panel px-3 py-1.5 lg:flex">
             <Radio className="h-3.5 w-3.5 text-success animate-pulse-dot" />
             <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Live</span>

@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      keyword_queries: {
+        Row: {
+          created_at: string
+          description: string | null
+          expression: string
+          id: string
+          name: string
+          terms: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          expression: string
+          id?: string
+          name: string
+          terms?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          expression?: string
+          id?: string
+          name?: string
+          terms?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       news_articles: {
         Row: {
           author: string | null

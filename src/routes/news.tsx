@@ -4,6 +4,8 @@ import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
 import { Database, FileText, Globe, RefreshCw, ExternalLink, Plus, AlertCircle, Pencil, Trash2, Save, X, LogIn } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useActiveKeyword } from "@/hooks/use-active-keyword";
+import { evalExpression } from "@/lib/keyword-query";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/news")({
@@ -46,6 +48,7 @@ function timeAgo(iso: string | null) {
 
 function Page() {
   const { isAuthenticated } = useAuth();
+  const { active } = useActiveKeyword();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | Sentiment>("all");
@@ -136,11 +139,20 @@ function Page() {
     toast.success("Berita dihapus");
   }
 
+  const filtered = active
+    ? articles.filter((a) =>
+        evalExpression(
+          active.expression,
+          [a.title, a.excerpt ?? "", a.source, a.category ?? "", (a.keywords ?? []).join(" ")].join(" "),
+        ),
+      )
+    : articles;
+
   const counts = {
-    total: articles.length,
-    positive: articles.filter((a) => a.sentiment === "positive").length,
-    negative: articles.filter((a) => a.sentiment === "negative").length,
-    sources: new Set(articles.map((a) => a.source)).size,
+    total: filtered.length,
+    positive: filtered.filter((a) => a.sentiment === "positive").length,
+    negative: filtered.filter((a) => a.sentiment === "negative").length,
+    sources: new Set(filtered.map((a) => a.source)).size,
   };
 
   return (
@@ -196,14 +208,16 @@ function Page() {
         >
           {loading ? (
             <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">Memuat data…</div>
-          ) : articles.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Database className="mb-2 h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Belum ada berita di database</p>
+              <p className="text-sm text-muted-foreground">
+                {active ? `Tidak ada berita cocok dengan query "${active.name}"` : "Belum ada berita di database"}
+              </p>
             </div>
           ) : (
             <ul className="divide-y divide-border">
-              {articles.map((a) => {
+              {filtered.map((a) => {
                 const isEditing = editingId === a.id;
                 if (isEditing) {
                   return (
