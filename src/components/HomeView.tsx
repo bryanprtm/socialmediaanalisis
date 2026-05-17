@@ -104,7 +104,7 @@ export function HomeView() {
               <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
                 MONITORING MEDIA
                 <br />
-                <span className="text-gradient-primary">PROPAM COMMAND</span>
+                <span className="text-gradient-primary">TACTICAL OPERATION CENTER</span>
               </h1>
               <p className="mt-2 font-mono text-xs uppercase tracking-[0.3em] text-primary">
                 ▸ Sentiment Analysis · Media Intelligence · RSS Feed
