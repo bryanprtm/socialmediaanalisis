@@ -21,6 +21,7 @@ import { Route as PredictionRouteImport } from './routes/prediction'
 import { Route as NewsRouteImport } from './routes/news'
 import { Route as MediaRouteImport } from './routes/media'
 import { Route as MapRouteImport } from './routes/map'
+import { Route as KeywordsRouteImport } from './routes/keywords'
 import { Route as ExportRouteImport } from './routes/export'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ComparativeRouteImport } from './routes/comparative'
@@ -87,6 +88,11 @@ const MapRoute = MapRouteImport.update({
   path: '/map',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KeywordsRoute = KeywordsRouteImport.update({
+  id: '/keywords',
+  path: '/keywords',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExportRoute = ExportRouteImport.update({
   id: '/export',
   path: '/export',
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/comparative': typeof ComparativeRoute
   '/dashboard': typeof DashboardRoute
   '/export': typeof ExportRoute
+  '/keywords': typeof KeywordsRoute
   '/map': typeof MapRoute
   '/media': typeof MediaRoute
   '/news': typeof NewsRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/comparative': typeof ComparativeRoute
   '/dashboard': typeof DashboardRoute
   '/export': typeof ExportRoute
+  '/keywords': typeof KeywordsRoute
   '/map': typeof MapRoute
   '/media': typeof MediaRoute
   '/news': typeof NewsRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/comparative': typeof ComparativeRoute
   '/dashboard': typeof DashboardRoute
   '/export': typeof ExportRoute
+  '/keywords': typeof KeywordsRoute
   '/map': typeof MapRoute
   '/media': typeof MediaRoute
   '/news': typeof NewsRoute
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/comparative'
     | '/dashboard'
     | '/export'
+    | '/keywords'
     | '/map'
     | '/media'
     | '/news'
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/comparative'
     | '/dashboard'
     | '/export'
+    | '/keywords'
     | '/map'
     | '/media'
     | '/news'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/comparative'
     | '/dashboard'
     | '/export'
+    | '/keywords'
     | '/map'
     | '/media'
     | '/news'
@@ -237,6 +249,7 @@ export interface RootRouteChildren {
   ComparativeRoute: typeof ComparativeRoute
   DashboardRoute: typeof DashboardRoute
   ExportRoute: typeof ExportRoute
+  KeywordsRoute: typeof KeywordsRoute
   MapRoute: typeof MapRoute
   MediaRoute: typeof MediaRoute
   NewsRoute: typeof NewsRoute
@@ -337,6 +350,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MapRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/keywords': {
+      id: '/keywords'
+      path: '/keywords'
+      fullPath: '/keywords'
+      preLoaderRoute: typeof KeywordsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/export': {
       id: '/export'
       path: '/export'
@@ -381,6 +401,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComparativeRoute: ComparativeRoute,
   DashboardRoute: DashboardRoute,
   ExportRoute: ExportRoute,
+  KeywordsRoute: KeywordsRoute,
   MapRoute: MapRoute,
   MediaRoute: MediaRoute,
   NewsRoute: NewsRoute,
@@ -397,3 +418,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
