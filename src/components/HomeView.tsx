@@ -142,38 +142,10 @@ export function HomeView() {
       {/* Stats */}
       <section className="mx-auto max-w-[1440px] px-6 pt-8">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            label="Total Artikel Hari Ini"
-            value="1,302"
-            delta="+12.5% vs kemarin"
-            deltaTone="up"
-            icon={<BarChart3 className="h-5 w-5" />}
-            accent="cyan"
-          />
-          <MetricCard
-            label="Skor Sentiment Rata-rata"
-            value="69%"
-            delta="+5.2% trend positif"
-            deltaTone="up"
-            icon={<Target className="h-5 w-5" />}
-            accent="success"
-          />
-          <MetricCard
-            label="Sumber Media Aktif"
-            value="90"
-            delta="+3 baru"
-            deltaTone="up"
-            icon={<Globe className="h-5 w-5" />}
-            accent="violet"
-          />
-          <MetricCard
-            label="Update Real-time"
-            value="182"
-            delta="↻ 4 detik lalu"
-            deltaTone="neutral"
-            icon={<Zap className="h-5 w-5" />}
-            accent="amber"
-          />
+          <MetricCard label="Total Artikel" value={loading ? "…" : String(s.total)} icon={<BarChart3 className="h-5 w-5" />} accent="cyan" hint="news database" />
+          <MetricCard label="Sentiment Positif" value={loading ? "…" : `${s.pctPos}%`} icon={<Target className="h-5 w-5" />} accent="success" hint={`${s.pos} artikel`} />
+          <MetricCard label="Sumber Media Aktif" value={loading ? "…" : String(s.sources.length)} icon={<Globe className="h-5 w-5" />} accent="violet" />
+          <MetricCard label="Topik Terdeteksi" value={loading ? "…" : String(s.keywords.length)} icon={<Zap className="h-5 w-5" />} accent="amber" />
         </div>
       </section>
 
