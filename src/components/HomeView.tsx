@@ -304,7 +304,7 @@ export function HomeView() {
                     <li key={t.name} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-panel-elevated p-3">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-foreground">{t.name}</p>
-                        <p className="font-mono text-[11px] text-muted-foreground">{t.mentions} mentions · {t.change}</p>
+                        <p className="font-mono text-[11px] text-muted-foreground">{t.mentions} mentions</p>
                       </div>
                       <Pill tone={t.sentiment === "positive" ? "positive" : t.sentiment === "negative" ? "negative" : "warning"}>
                         {t.sentiment}
