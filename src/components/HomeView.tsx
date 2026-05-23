@@ -63,10 +63,10 @@ export function HomeView() {
   const { filtered, loading } = useFilteredArticles();
   const s = summarize(filtered);
   const recents = [...filtered]
-    .sort((a, b) => new Date(b.published_at || b.created_at || 0).getTime() - new Date(a.published_at || a.created_at || 0).getTime())
+    .sort((a, b) => new Date(b.published_at || 0).getTime() - new Date(a.published_at || 0).getTime())
     .slice(0, 6);
   const topics = s.keywords.slice(0, 5).map((k) => {
-    const items = filtered.filter((a) => (a.title + " " + (a.summary ?? "")).toLowerCase().includes(k.name.toLowerCase()));
+    const items = filtered.filter((a) => (a.title + " " + (a.excerpt ?? "")).toLowerCase().includes(k.name.toLowerCase()));
     const pos = items.filter((a) => a.sentiment === "positive").length;
     const neg = items.filter((a) => a.sentiment === "negative").length;
     const sentiment: "positive" | "negative" | "warning" = pos > neg ? "positive" : neg > pos ? "negative" : "warning";
