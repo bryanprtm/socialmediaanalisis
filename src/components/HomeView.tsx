@@ -43,21 +43,6 @@ const features = [
   { icon: MapPin, title: "Peta Indonesia", desc: "Distribusi geografis sentiment di seluruh nusantara", accent: "danger", to: "/map" },
 ] as const;
 
-const activities = [
-  { dot: "bg-success", title: "Analisis sentiment artikel Politik selesai", time: "2 menit lalu", tag: "AI" },
-  { dot: "bg-cyan", title: "126 artikel baru diproses dari CNN Indonesia", time: "5 menit lalu", tag: "RSS" },
-  { dot: "bg-success", title: "Tren positif terdeteksi pada topik Ekonomi", time: "8 menit lalu", tag: "TREND" },
-  { dot: "bg-amber", title: "Update data geografis Jakarta", time: "12 menit lalu", tag: "GEO" },
-  { dot: "bg-violet", title: "Backup otomatis database berhasil", time: "15 menit lalu", tag: "SYS" },
-];
-
-const topics = [
-  { name: "Pembangunan Infrastruktur", mentions: 342, sentiment: "positive" as const, change: "+12%" },
-  { name: "Kebijakan Ekonomi", mentions: 289, sentiment: "warning" as const, change: "+5%" },
-  { name: "Program Kesehatan", mentions: 234, sentiment: "positive" as const, change: "+18%" },
-  { name: "Pendidikan Digital", mentions: 198, sentiment: "positive" as const, change: "+22%" },
-  { name: "Lingkungan Hidup", mentions: 167, sentiment: "negative" as const, change: "-8%" },
-];
 
 function useClock() {
   const [t, setT] = useState(() => new Date());
