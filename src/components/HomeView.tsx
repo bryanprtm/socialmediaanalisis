@@ -24,6 +24,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import logo from "@/assets/propam-logo.png";
 import { Panel, MetricCard, Bar, Pill } from "./PageShell";
+import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 
 type TabId = "fitur" | "aktivitas" | "quick";
 
@@ -42,21 +43,6 @@ const features = [
   { icon: MapPin, title: "Peta Indonesia", desc: "Distribusi geografis sentiment di seluruh nusantara", accent: "danger", to: "/map" },
 ] as const;
 
-const activities = [
-  { dot: "bg-success", title: "Analisis sentiment artikel Politik selesai", time: "2 menit lalu", tag: "AI" },
-  { dot: "bg-cyan", title: "126 artikel baru diproses dari CNN Indonesia", time: "5 menit lalu", tag: "RSS" },
-  { dot: "bg-success", title: "Tren positif terdeteksi pada topik Ekonomi", time: "8 menit lalu", tag: "TREND" },
-  { dot: "bg-amber", title: "Update data geografis Jakarta", time: "12 menit lalu", tag: "GEO" },
-  { dot: "bg-violet", title: "Backup otomatis database berhasil", time: "15 menit lalu", tag: "SYS" },
-];
-
-const topics = [
-  { name: "Pembangunan Infrastruktur", mentions: 342, sentiment: "positive" as const, change: "+12%" },
-  { name: "Kebijakan Ekonomi", mentions: 289, sentiment: "warning" as const, change: "+5%" },
-  { name: "Program Kesehatan", mentions: 234, sentiment: "positive" as const, change: "+18%" },
-  { name: "Pendidikan Digital", mentions: 198, sentiment: "positive" as const, change: "+22%" },
-  { name: "Lingkungan Hidup", mentions: 167, sentiment: "negative" as const, change: "-8%" },
-];
 
 function useClock() {
   const [t, setT] = useState(() => new Date());
@@ -73,6 +59,19 @@ export function HomeView() {
   const t = useClock();
   const time = t.toLocaleTimeString("id-ID", { hour12: false });
   const date = t.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
+  const { filtered, loading } = useFilteredArticles();
+  const s = summarize(filtered);
+  const recents = [...filtered]
+    .sort((a, b) => new Date(b.published_at || 0).getTime() - new Date(a.published_at || 0).getTime())
+    .slice(0, 6);
+  const topics = s.keywords.slice(0, 5).map((k) => {
+    const items = filtered.filter((a) => (a.title + " " + (a.excerpt ?? "")).toLowerCase().includes(k.name.toLowerCase()));
+    const pos = items.filter((a) => a.sentiment === "positive").length;
+    const neg = items.filter((a) => a.sentiment === "negative").length;
+    const sentiment: "positive" | "negative" | "warning" = pos > neg ? "positive" : neg > pos ? "negative" : "warning";
+    return { name: k.name, mentions: k.count, sentiment };
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,38 +142,10 @@ export function HomeView() {
       {/* Stats */}
       <section className="mx-auto max-w-[1440px] px-6 pt-8">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            label="Total Artikel Hari Ini"
-            value="1,302"
-            delta="+12.5% vs kemarin"
-            deltaTone="up"
-            icon={<BarChart3 className="h-5 w-5" />}
-            accent="cyan"
-          />
-          <MetricCard
-            label="Skor Sentiment Rata-rata"
-            value="69%"
-            delta="+5.2% trend positif"
-            deltaTone="up"
-            icon={<Target className="h-5 w-5" />}
-            accent="success"
-          />
-          <MetricCard
-            label="Sumber Media Aktif"
-            value="90"
-            delta="+3 baru"
-            deltaTone="up"
-            icon={<Globe className="h-5 w-5" />}
-            accent="violet"
-          />
-          <MetricCard
-            label="Update Real-time"
-            value="182"
-            delta="↻ 4 detik lalu"
-            deltaTone="neutral"
-            icon={<Zap className="h-5 w-5" />}
-            accent="amber"
-          />
+          <MetricCard label="Total Artikel" value={loading ? "…" : String(s.total)} icon={<BarChart3 className="h-5 w-5" />} accent="cyan" hint="news database" />
+          <MetricCard label="Sentiment Positif" value={loading ? "…" : `${s.pctPos}%`} icon={<Target className="h-5 w-5" />} accent="success" hint={`${s.pos} artikel`} />
+          <MetricCard label="Sumber Media Aktif" value={loading ? "…" : String(s.sources.length)} icon={<Globe className="h-5 w-5" />} accent="violet" />
+          <MetricCard label="Topik Terdeteksi" value={loading ? "…" : String(s.keywords.length)} icon={<Zap className="h-5 w-5" />} accent="amber" />
         </div>
       </section>
 
@@ -250,39 +221,50 @@ export function HomeView() {
               }
             >
               <ul className="divide-y divide-border">
-                {activities.map((a, i) => (
-                  <li key={i} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-                    <span className={`mt-1.5 h-2 w-2 rounded-full ${a.dot} animate-pulse-dot`} />
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-medium text-foreground">{a.title}</p>
-                        <Pill tone="info">{a.tag}</Pill>
-                      </div>
-                      <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{a.time}</p>
-                    </div>
-                  </li>
-                ))}
+                {loading ? (
+                  <li className="py-6 text-center text-sm text-muted-foreground">Memuat…</li>
+                ) : recents.length === 0 ? (
+                  <li className="py-6 text-center text-sm text-muted-foreground">Belum ada artikel di database.</li>
+                ) : (
+                  recents.map((a) => {
+                    const dot = a.sentiment === "positive" ? "bg-success" : a.sentiment === "negative" ? "bg-danger" : "bg-cyan";
+                    const tag = (a.category ?? a.source).toUpperCase().slice(0, 12);
+                    const when = a.published_at ? new Date(a.published_at).toLocaleString("id-ID") : "—";
+                    return (
+                      <li key={a.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                        <span className={`mt-1.5 h-2 w-2 rounded-full ${dot} animate-pulse-dot`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="truncate text-sm font-medium text-foreground">{a.title}</p>
+                            <Pill tone="info">{tag}</Pill>
+                          </div>
+                          <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{a.source} · {when}</p>
+                        </div>
+                      </li>
+                    );
+                  })
+                )}
               </ul>
             </Panel>
           )}
 
           {tab === "quick" && (
             <div className="grid gap-5 lg:grid-cols-2">
-              <Panel title="Sentiment Trend Hari Ini" icon={<TrendingUp className="h-4 w-4" />}>
+              <Panel title="Sentiment Trend" icon={<TrendingUp className="h-4 w-4" />}>
                 <div className="space-y-4">
-                  <Bar label="Positif" value={68} color="success" />
-                  <Bar label="Negatif" value={22} color="danger" />
-                  <Bar label="Netral" value={10} color="neutral" />
+                  <Bar label="Positif" value={s.pctPos} color="success" />
+                  <Bar label="Negatif" value={s.pctNeg} color="danger" />
+                  <Bar label="Netral" value={Math.max(0, 100 - s.pctPos - s.pctNeg)} color="neutral" />
                 </div>
                 <div className="mt-6 grid grid-cols-3 gap-2 border-t border-border pt-4">
                   {[
-                    { l: "Total", v: "1,302" },
-                    { l: "Sumber", v: "90" },
-                    { l: "Akurasi", v: "94%" },
-                  ].map((s) => (
-                    <div key={s.l} className="rounded-lg border border-border bg-panel-elevated p-3 text-center">
-                      <p className="font-display text-lg font-bold text-foreground">{s.v}</p>
-                      <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{s.l}</p>
+                    { l: "Total", v: String(s.total) },
+                    { l: "Sumber", v: String(s.sources.length) },
+                    { l: "Region", v: String(s.regions.length) },
+                  ].map((x) => (
+                    <div key={x.l} className="rounded-lg border border-border bg-panel-elevated p-3 text-center">
+                      <p className="font-display text-lg font-bold text-foreground">{x.v}</p>
+                      <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{x.l}</p>
                     </div>
                   ))}
                 </div>
@@ -294,7 +276,7 @@ export function HomeView() {
                     <li key={t.name} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-panel-elevated p-3">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-foreground">{t.name}</p>
-                        <p className="font-mono text-[11px] text-muted-foreground">{t.mentions} mentions · {t.change}</p>
+                        <p className="font-mono text-[11px] text-muted-foreground">{t.mentions} mentions</p>
                       </div>
                       <Pill tone={t.sentiment === "positive" ? "positive" : t.sentiment === "negative" ? "negative" : "warning"}>
                         {t.sentiment}

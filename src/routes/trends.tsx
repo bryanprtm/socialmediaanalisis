@@ -1,181 +1,120 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PageShell, Panel, MetricCard, Bar, Pill } from "@/components/PageShell";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
-import { TrendingUp, Hash, Bell, RefreshCw, Flame, Sparkles, Activity, BarChart3 } from "lucide-react";
-import { useActiveKeyword } from "@/hooks/use-active-keyword";
-import { evalExpression } from "@/lib/keyword-query";
+import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
+import { ResponsiveContainer, BarChart, Bar as RBar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import { TrendingUp, Hash, Flame, Activity, Sparkles } from "lucide-react";
+import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 
 export const Route = createFileRoute("/trends")({
   head: () => ({
     meta: [
       { title: "Trends & Topics — PROPAM Command Center" },
-      { name: "description", content: "Analisis trending topics dan evolusi perbincangan publik secara real-time." },
+      { name: "description", content: "Analisis trending topics dari news database." },
     ],
   }),
   component: TrendsPage,
 });
 
-const evolution = [
-  { t: "00:00", ekonomi: 130, infra: 110, kesehatan: 95, vokasi: 80 },
-  { t: "04:00", ekonomi: 160, infra: 140, kesehatan: 120, vokasi: 100 },
-  { t: "08:00", ekonomi: 220, infra: 200, kesehatan: 180, vokasi: 150 },
-  { t: "12:00", ekonomi: 270, infra: 250, kesehatan: 230, vokasi: 200 },
-  { t: "16:00", ekonomi: 290, infra: 270, kesehatan: 240, vokasi: 220 },
-  { t: "20:00", ekonomi: 250, infra: 240, kesehatan: 200, vokasi: 180 },
-];
-
-const trending = [
-  { rank: 1, name: "Kebijakan Ekonomi", mentions: 2847, change: "+15.3%", tone: "warning" as const, time: "14:30", tags: ["#KebijakanFiskal", "#KenaikanInflasi"] },
-  { rank: 2, name: "Infrastruktur Digital", mentions: 1923, change: "+28.7%", tone: "positive" as const, time: "13:15", tags: ["#DigitalIndonesia", "#Infrastruktur"] },
-  { rank: 3, name: "Program Kesehatan", mentions: 1654, change: "-8.2%", tone: "negative" as const, time: "11:45", tags: ["#KesehatanPublik", "#BPJS"] },
-  { rank: 4, name: "Pendidikan Vokasi", mentions: 1432, change: "+34.1%", tone: "positive" as const, time: "12:20", tags: ["#PendidikanVokasi", "#SDM"] },
-  { rank: 5, name: "Energi Terbarukan", mentions: 1287, change: "+12.8%", tone: "positive" as const, time: "10:00", tags: ["#EnergiTerbarukan", "#GreenEnergy"] },
-];
-
-const emerging = [
-  { name: "AI Governance", mentions: 736, growth: "+156.7%", color: "warning" as const },
-  { name: "Smart Mobility", mentions: 489, growth: "+134.2%", color: "violet" as const },
-  { name: "Startup Fintech", mentions: 367, growth: "+89.5%", color: "success" as const },
-  { name: "Perlindungan Digital", mentions: 245, growth: "+67.8%", color: "primary" as const },
-];
-
 function TrendsPage() {
-  const { active } = useActiveKeyword();
-  const matches = (text: string) => !active || evalExpression(active.expression, text);
-  const filteredTrending = trending.filter((t) => matches([t.name, ...t.tags].join(" ")));
-  const filteredEmerging = emerging.filter((e) => matches(e.name));
+  const { filtered, loading, active } = useFilteredArticles();
+  const s = summarize(filtered);
+  const trending = s.keywords.slice(0, 10);
+  const topCats = s.categories.slice(0, 8);
+  const maxKw = trending[0]?.count ?? 1;
+
+  // 7-day evolution by top 4 categories
+  const top4 = topCats.slice(0, 4).map((c) => c.name);
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const dayStart = new Date();
+    dayStart.setHours(0, 0, 0, 0);
+    dayStart.setDate(dayStart.getDate() - (6 - i));
+    const dayEnd = dayStart.getTime() + 86400000;
+    const row: Record<string, number | string> = { t: dayStart.toLocaleDateString("id-ID", { weekday: "short" }) };
+    for (const cat of top4) row[cat] = 0;
+    for (const a of filtered) {
+      if (!a.published_at || !a.category || !top4.includes(a.category)) continue;
+      const t = new Date(a.published_at).getTime();
+      if (t >= dayStart.getTime() && t < dayEnd) row[a.category] = (row[a.category] as number) + 1;
+    }
+    return row;
+  });
+
+  const palette = ["oklch(0.78 0.18 195)", "oklch(0.65 0.22 295)", "oklch(0.78 0.2 150)", "oklch(0.82 0.18 80)"];
+
   return (
     <PageShell
       eyebrow="Real-time Pulse"
-      title="Trends & Topics Analysis"
-      description="Analisis mendalam trending topics dan evolusi perbincangan publik di Indonesia."
-      actions={
-        <>
-          <select className="rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground">
-            <option>24 Jam</option><option>7 Hari</option><option>30 Hari</option>
-          </select>
-          <button className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-cyan px-4 py-2 text-xs font-semibold text-background shadow-[0_0_24px_-8px_oklch(0.78_0.18_195_/_0.7)]">
-            <RefreshCw className="h-3.5 w-3.5" /> Auto Refresh
-          </button>
-          <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-4 py-2 text-xs font-semibold text-foreground hover:border-primary/40">
-            <Bell className="h-3.5 w-3.5" /> Set Alert
-          </button>
-        </>
-      }
+      title="Trends & Topics"
+      description="Trending topik dan distribusi kategori dihitung langsung dari news database."
     >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard label="Total Artikel" value={String(s.total)} icon={<Activity className="h-5 w-5" />} accent="cyan" hint={active ? "Filtered" : "All"} />
+        <MetricCard label="Keyword Unik" value={String(s.keywords.length)} icon={<Hash className="h-5 w-5" />} accent="violet" />
+        <MetricCard label="Kategori Aktif" value={String(s.categories.length)} icon={<Sparkles className="h-5 w-5" />} accent="success" />
+        <MetricCard label="Sumber" value={String(s.sources.length)} icon={<TrendingUp className="h-5 w-5" />} accent="amber" />
+      </div>
 
       <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-3">
-        <Panel title="Topik Trending Hari Ini" icon={<Flame className="h-4 w-4" />}>
-          <ul className="space-y-3">
-            {filteredTrending.length === 0 ? (
-              <li className="py-6 text-center text-xs text-muted-foreground">Tidak ada topik cocok</li>
-            ) : filteredTrending.map((t) => (
-              <li key={t.rank} className="rounded-lg border border-border bg-panel-elevated p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="font-mono text-[11px] text-primary">#{t.rank}</p>
-                    <p className="text-sm font-semibold text-foreground">{t.name}</p>
+        <Panel title="Topik Trending" icon={<Flame className="h-4 w-4" />}>
+          {loading ? <p className="py-6 text-center text-xs text-muted-foreground">Memuat…</p> : trending.length === 0 ? (
+            <p className="py-6 text-center text-xs text-muted-foreground">{active ? "Tidak ada keyword cocok dengan filter aktif." : "Belum ada keyword terindeks."}</p>
+          ) : (
+            <ul className="space-y-2">
+              {trending.map((k, i) => (
+                <li key={k.name} className="rounded-lg border border-border bg-panel-elevated p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-mono text-[11px] text-primary">#{i + 1}</p>
+                      <p className="truncate text-sm font-semibold text-foreground">{k.name}</p>
+                    </div>
+                    <Pill tone="info">{k.count}</Pill>
                   </div>
-                  <Pill tone={t.tone}>{t.change}</Pill>
-                </div>
-                <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
-                  <div>
-                    <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Mentions</p>
-                    <p className="font-mono font-bold text-foreground">{t.mentions.toLocaleString()}</p>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full bg-gradient-cyan" style={{ width: `${Math.round((k.count / maxKw) * 100)}%` }} />
                   </div>
-                  <div>
-                    <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Peak</p>
-                    <p className="font-mono font-bold text-foreground">{t.time}</p>
-                  </div>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {t.tags.map((g) => <Pill key={g} tone="info">{g}</Pill>)}
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          )}
         </Panel>
 
-        <Panel className="lg:col-span-2" title="Evolusi Topik (24 Jam)" icon={<Activity className="h-4 w-4" />} action={
-          <div className="flex gap-1">
-            <button className="rounded-md bg-primary/15 px-2.5 py-1 font-mono text-[10px] font-semibold text-primary">Live</button>
-            <button className="rounded-md px-2.5 py-1 font-mono text-[10px] font-semibold text-muted-foreground hover:text-foreground">Export</button>
-          </div>
-        }>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={evolution}>
-                <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 0.05)" />
-                <XAxis dataKey="t" stroke="oklch(0.7 0.025 240)" fontSize={11} />
-                <YAxis stroke="oklch(0.7 0.025 240)" fontSize={11} />
-                <Tooltip contentStyle={{ background: "oklch(0.18 0.03 252)", border: "1px solid oklch(1 0 0 / 0.1)", borderRadius: 8, fontSize: 12 }} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="ekonomi" stroke="oklch(0.78 0.18 195)" strokeWidth={2} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="infra" stroke="oklch(0.65 0.22 295)" strokeWidth={2} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="kesehatan" stroke="oklch(0.78 0.2 150)" strokeWidth={2} dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="vokasi" stroke="oklch(0.82 0.18 80)" strokeWidth={2} dot={{ r: 3 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat l="Pertumbuhan Avg" v="+12%" tone="text-success" />
-            <Stat l="Peak Duration" v="2.4h" tone="text-cyan" />
-            <Stat l="Total Mentions" v="847" tone="text-violet" />
-            <Stat l="Volatility Index" v="68%" tone="text-amber" />
-          </div>
+        <Panel className="lg:col-span-2" title="Evolusi Kategori (7 Hari)" icon={<Activity className="h-4 w-4" />}>
+          {top4.length === 0 ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">Belum ada artikel dengan kategori.</p>
+          ) : (
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={days}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 0.05)" />
+                  <XAxis dataKey="t" stroke="oklch(0.7 0.025 240)" fontSize={11} />
+                  <YAxis stroke="oklch(0.7 0.025 240)" fontSize={11} />
+                  <Tooltip contentStyle={{ background: "oklch(0.18 0.03 252)", border: "1px solid oklch(1 0 0 / 0.1)", borderRadius: 8, fontSize: 12 }} />
+                  {top4.map((c, i) => (
+                    <RBar key={c} dataKey={c} stackId="a" fill={palette[i % palette.length]} />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </Panel>
       </div>
 
-      <Panel className="mt-6" title="Topik Emerging" icon={<Sparkles className="h-4 w-4" />}>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {filteredEmerging.length === 0 ? (
-            <p className="col-span-full py-6 text-center text-xs text-muted-foreground">Tidak ada topik emerging cocok</p>
-          ) : filteredEmerging.map((e) => (
-            <div key={e.name} className="rounded-lg border border-border bg-panel-elevated p-4">
-              <p className="text-sm font-semibold text-foreground">{e.name}</p>
-              <p className="font-mono text-[11px] text-muted-foreground">{e.mentions} mentions</p>
-              <div className="mt-3 flex items-end justify-between">
-                <Bar label="growth" value={Math.min(100, parseInt(e.growth))} color={e.color} unit="" />
+      <Panel className="mt-6" title="Distribusi Kategori" icon={<Hash className="h-4 w-4" />}>
+        {topCats.length === 0 ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">Belum ada kategori.</p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {topCats.map((c) => (
+              <div key={c.name} className="rounded-lg border border-border bg-panel-elevated p-4">
+                <p className="text-sm font-semibold text-foreground">{c.name}</p>
+                <p className="mt-1 font-mono text-[11px] text-muted-foreground">{c.count} artikel</p>
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full bg-gradient-cyan" style={{ width: `${Math.round((c.count / (topCats[0]?.count || 1)) * 100)}%` }} />
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </Panel>
-
-      <Panel className="mt-6 bg-gradient-violet" title="Cloud Kata Populer" icon={<Hash className="h-4 w-4" />}>
-        <div className="grid gap-3 lg:grid-cols-2">
-          <div className="relative grid h-64 place-items-center overflow-hidden rounded-xl bg-black/30 grid-bg">
-            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 p-6 text-center">
-              <span className="font-display text-4xl font-bold text-cyan">Kebijakan</span>
-              <span className="font-display text-3xl font-bold text-violet">Digital</span>
-              <span className="font-display text-5xl font-bold text-amber">Infrastruktur</span>
-              <span className="font-display text-3xl font-bold text-success">Ekonomi</span>
-              <span className="font-display text-2xl font-bold text-magenta">Pembangunan</span>
-              <span className="font-display text-xl font-bold text-rose">Teknologi</span>
-              <span className="font-display text-2xl font-bold text-cyan">Inovasi</span>
-              <span className="font-display text-3xl font-bold text-violet">Transformasi</span>
-              <span className="font-display text-xl font-bold text-amber">Modernisasi</span>
-              <span className="font-display text-lg font-bold text-success">Efisiensi</span>
-            </div>
+            ))}
           </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Stat l="Total Keywords" v="15,106" tone="text-cyan" big />
-            <Stat l="Total Mentions" v="68%" tone="text-amber" big />
-            <Stat l="Validity Index" v="847" tone="text-success" big />
-            <Stat l="Velocity" v="+24%" tone="text-magenta" big />
-          </div>
-        </div>
+        )}
       </Panel>
     </PageShell>
-  );
-}
-
-function Stat({ l, v, tone, big }: { l: string; v: string; tone: string; big?: boolean }) {
-  return (
-    <div className="rounded-lg border border-border bg-panel-elevated p-3 text-center">
-      <p className={`font-display ${big ? "text-2xl" : "text-lg"} font-bold ${tone}`}>{v}</p>
-      <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{l}</p>
-    </div>
   );
 }
