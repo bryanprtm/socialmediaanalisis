@@ -250,21 +250,21 @@ export function HomeView() {
 
           {tab === "quick" && (
             <div className="grid gap-5 lg:grid-cols-2">
-              <Panel title="Sentiment Trend Hari Ini" icon={<TrendingUp className="h-4 w-4" />}>
+              <Panel title="Sentiment Trend" icon={<TrendingUp className="h-4 w-4" />}>
                 <div className="space-y-4">
-                  <Bar label="Positif" value={68} color="success" />
-                  <Bar label="Negatif" value={22} color="danger" />
-                  <Bar label="Netral" value={10} color="neutral" />
+                  <Bar label="Positif" value={s.pctPos} color="success" />
+                  <Bar label="Negatif" value={s.pctNeg} color="danger" />
+                  <Bar label="Netral" value={Math.max(0, 100 - s.pctPos - s.pctNeg)} color="neutral" />
                 </div>
                 <div className="mt-6 grid grid-cols-3 gap-2 border-t border-border pt-4">
                   {[
-                    { l: "Total", v: "1,302" },
-                    { l: "Sumber", v: "90" },
-                    { l: "Akurasi", v: "94%" },
-                  ].map((s) => (
-                    <div key={s.l} className="rounded-lg border border-border bg-panel-elevated p-3 text-center">
-                      <p className="font-display text-lg font-bold text-foreground">{s.v}</p>
-                      <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{s.l}</p>
+                    { l: "Total", v: String(s.total) },
+                    { l: "Sumber", v: String(s.sources.length) },
+                    { l: "Region", v: String(s.regions.length) },
+                  ].map((x) => (
+                    <div key={x.l} className="rounded-lg border border-border bg-panel-elevated p-3 text-center">
+                      <p className="font-display text-lg font-bold text-foreground">{x.v}</p>
+                      <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{x.l}</p>
                     </div>
                   ))}
                 </div>
