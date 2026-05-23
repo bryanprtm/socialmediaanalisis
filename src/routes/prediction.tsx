@@ -1,154 +1,107 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PageShell, Panel, MetricCard, Bar, Pill } from "@/components/PageShell";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar as RBar } from "recharts";
-import { Activity, Brain, AlertTriangle, Lightbulb, Download, Settings, RefreshCw } from "lucide-react";
+import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
+import { Activity, Brain, AlertTriangle, TrendingUp } from "lucide-react";
+import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 
 export const Route = createFileRoute("/prediction")({
-  head: () => ({ meta: [{ title: "Issue Prediction — PROPAM" }, { name: "description", content: "Prediksi tren topik dengan machine learning." }] }),
+  head: () => ({ meta: [{ title: "Issue Prediction — PROPAM" }, { name: "description", content: "Prediksi tren berdasarkan news database." }] }),
   component: Page,
 });
 
-const trend = Array.from({ length: 7 }, (_, i) => ({ d: `Day ${i + 1}`, v: 45 + i * 5 + (i > 3 ? 8 : 0) }));
-const perf = [
-  { k: "Kebijakan Ekonomi", v: 88 }, { k: "Teknologi Digital", v: 76 },
-  { k: "Program Kesehatan", v: 92 }, { k: "Infrastruktur", v: 81 },
-];
-const topics = [
-  { n: "Kebijakan Ekonomi", c: 89, cur: 67, ch: "+12%", tone: "positive" as const, kf: ["Inflasi menurun", "Pertumbuhan GDP", "Kebijakan fiskal baru"] },
-  { n: "Teknologi Digital", c: 76, cur: 84, ch: "-5%", tone: "negative" as const, kf: ["Regulasi baru", "Privasi data", "Kompetisi global"] },
-  { n: "Program Kesehatan", c: 92, cur: 72, ch: "+18%", tone: "positive" as const, kf: ["BPJS expansion", "Telemedicine", "Preventive care"] },
-  { n: "Infrastruktur", c: 81, cur: 58, ch: "+8%", tone: "positive" as const, kf: ["Proyek IKN", "Transportasi publik", "Smart city"] },
-];
-
 function Page() {
+  const { filtered, loading, active } = useFilteredArticles();
+  const s = summarize(filtered);
+
+  // Build 14-day trend (last 7 historical + projected 7 via linear regression)
+  const dayBuckets = Array.from({ length: 14 }, (_, i) => {
+    const day = new Date();
+    day.setHours(0, 0, 0, 0);
+    day.setDate(day.getDate() - (13 - i));
+    const start = day.getTime();
+    const end = start + 86400000;
+    const count = i < 7
+      ? filtered.filter((a) => a.published_at && new Date(a.published_at).getTime() >= start && new Date(a.published_at).getTime() < end).length
+      : null;
+    return { d: day.toLocaleDateString("id-ID", { month: "short", day: "2-digit" }), v: count, isPrediction: i >= 7 };
+  });
+
+  // Linear regression over first 7 to project next 7
+  const hist = dayBuckets.slice(0, 7).map((b, i) => ({ x: i, y: b.v as number }));
+  const n = hist.length;
+  const sumX = hist.reduce((a, h) => a + h.x, 0);
+  const sumY = hist.reduce((a, h) => a + h.y, 0);
+  const sumXY = hist.reduce((a, h) => a + h.x * h.y, 0);
+  const sumXX = hist.reduce((a, h) => a + h.x * h.x, 0);
+  const denom = n * sumXX - sumX * sumX;
+  const slope = denom === 0 ? 0 : (n * sumXY - sumX * sumY) / denom;
+  const intercept = (sumY - slope * sumX) / n;
+  const trend = dayBuckets.map((b, i) => ({
+    d: b.d,
+    actual: i < 7 ? b.v : null,
+    predicted: i >= 6 ? Math.max(0, Math.round(intercept + slope * i)) : null,
+  }));
+
+  const growth = sumY > 0 ? Math.round((slope * 7 / (sumY / 7)) * 100) : 0;
+  const topKeywords = s.keywords.slice(0, 6);
+  const maxKw = topKeywords[0]?.count ?? 1;
+
   return (
-    <PageShell eyebrow="ML Forecast Engine" title="Prediksi Isu" description="Prediksi tren dan perubahan topik menggunakan machine learning dan AI analytics."
-      actions={
-        <>
-          <select className="rounded-lg border border-border bg-panel px-3 py-2 text-xs text-foreground"><option>7 Hari</option></select>
-          <select className="rounded-lg border border-border bg-panel px-3 py-2 text-xs text-foreground"><option>Ensemble Model</option></select>
-          <button className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-xs font-semibold text-background"><RefreshCw className="h-3.5 w-3.5" /> Auto Update</button>
-        </>
-      }>
-      <div className="flex items-center gap-4 rounded-lg border border-border bg-panel p-4">
-        <span className="font-mono text-xs text-muted-foreground">Confidence Threshold:</span>
-        <div className="h-2 w-48 overflow-hidden rounded-full bg-muted"><div className="h-full bg-gradient-cyan" style={{ width: "75%" }} /></div>
-        <span className="font-mono text-xs font-semibold text-primary">75%</span>
-        <span className="ml-auto font-mono text-xs text-muted-foreground">Model: <span className="text-foreground">ensemble</span></span>
-        <button className="rounded-lg border border-border bg-panel-elevated px-3 py-1.5 text-xs text-foreground"><Download className="inline h-3 w-3" /> Export</button>
-        <button className="rounded-lg border border-border bg-panel-elevated px-3 py-1.5 text-xs text-foreground"><Settings className="inline h-3 w-3" /> Config</button>
+    <PageShell eyebrow="Forecast" title="Prediksi Isu" description="Proyeksi volume artikel berdasarkan data 7 hari terakhir. Disaring berdasarkan kata kunci aktif.">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard label="Total Artikel" value={String(s.total)} accent="cyan" icon={<Activity className="h-5 w-5" />} hint={active ? "Filtered" : "All"} />
+        <MetricCard label="Tren Pertumbuhan" value={`${growth >= 0 ? "+" : ""}${growth}%`} accent={growth >= 0 ? "success" : "danger"} icon={<TrendingUp className="h-5 w-5" />} hint="7 hari" />
+        <MetricCard label="Rata-rata Harian" value={String(Math.round(sumY / 7))} accent="violet" icon={<Brain className="h-5 w-5" />} />
+        <MetricCard label="Proyeksi H+7" value={String(Math.max(0, Math.round(intercept + slope * 13)))} accent="amber" icon={<AlertTriangle className="h-5 w-5" />} />
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Model Accuracy" value="87%" accent="success" icon={<Brain className="h-5 w-5" />} />
-        <MetricCard label="Precision Score" value="92%" accent="cyan" icon={<Activity className="h-5 w-5" />} />
-        <MetricCard label="Recall Rate" value="84%" accent="violet" icon={<Activity className="h-5 w-5" />} />
-        <MetricCard label="F1 Score" value="88%" accent="amber" icon={<Activity className="h-5 w-5" />} />
-      </div>
-
-      <Panel className="mt-6" title="Trend Prediction — 7 Hari ke Depan" icon={<Activity className="h-4 w-4" />} action={<Pill tone="info">Confidence 87%</Pill>}>
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={trend}>
-              <defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="oklch(0.78 0.18 195)" stopOpacity={0.5} /><stop offset="100%" stopColor="oklch(0.78 0.18 195)" stopOpacity={0} /></linearGradient></defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 0.05)" />
-              <XAxis dataKey="d" stroke="oklch(0.7 0.025 240)" fontSize={11} />
-              <YAxis stroke="oklch(0.7 0.025 240)" fontSize={11} />
-              <Tooltip contentStyle={{ background: "oklch(0.18 0.03 252)", border: "1px solid oklch(1 0 0 / 0.1)", borderRadius: 8, fontSize: 12 }} />
-              <Area type="monotone" dataKey="v" stroke="oklch(0.78 0.18 195)" fill="url(#pg)" strokeWidth={2} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="mt-4 grid grid-cols-3 gap-3">
-          <div className="rounded-lg bg-cyan/10 p-3 text-center"><p className="font-display text-xl font-bold text-cyan">+24%</p><p className="font-mono text-[10px] uppercase text-muted-foreground">Predicted Growth</p></div>
-          <div className="rounded-lg bg-success/10 p-3 text-center"><p className="font-display text-xl font-bold text-success">87%</p><p className="font-mono text-[10px] uppercase text-muted-foreground">Avg Confidence</p></div>
-          <div className="rounded-lg bg-violet/10 p-3 text-center"><p className="font-display text-xl font-bold text-violet">3.2%</p><p className="font-mono text-[10px] uppercase text-muted-foreground">Prediction Error</p></div>
-        </div>
-      </Panel>
-
-      <Panel className="mt-6" title="Prediksi Perubahan Topik">
-        <ul className="divide-y divide-border">
-          {topics.map((t) => (
-            <li key={t.n} className="py-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-foreground">{t.n}</p>
-                    <Pill tone="info">{t.c}% confidence</Pill>
-                  </div>
-                  <div className="mt-2 flex items-center gap-3">
-                    <span className="font-mono text-xs text-muted-foreground">Current Trend</span>
-                    <div className="h-1.5 w-48 overflow-hidden rounded-full bg-muted"><div className="h-full bg-gradient-cyan" style={{ width: `${t.cur}%` }} /></div>
-                    <span className="font-mono text-xs text-foreground">{t.cur}%</span>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    <span className="font-mono text-[10px] uppercase text-muted-foreground">Key Factors:</span>
-                    {t.kf.map((f) => <Pill key={f} tone="info">{f}</Pill>)}
-                  </div>
-                </div>
-                <Pill tone={t.tone}>{t.ch}</Pill>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </Panel>
-
-      <Panel className="mt-6 bg-gradient-violet" title="AI Insight" icon={<Lightbulb className="h-4 w-4 text-white" />}>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div>
-            <h4 className="text-sm font-bold text-white">Strategic Insights</h4>
-            <div className="mt-3 space-y-2">
-              {[
-                { t: "Peak Recognition", v: 87, d: "Model memprediksi puncak diskusi kebijakan ekonomi akan terjadi 3-5 hari ke depan." },
-                { t: "Market Opportunity", v: 74, d: "Gap dalam coverage topik teknologi blockchain dapat dimanfaatkan untuk meningkatkan engagement 34%." },
-              ].map((i) => (
-                <div key={i.t} className="rounded-lg bg-black/30 p-3">
-                  <div className="flex items-center justify-between"><span className="text-sm font-semibold text-white">{i.t}</span><Pill tone="info">{i.v}%</Pill></div>
-                  <p className="mt-1 text-xs text-white/80">{i.d}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div>
-            <h4 className="flex items-center gap-2 text-sm font-bold text-white"><AlertTriangle className="h-4 w-4" /> Risk Alerts</h4>
-            <div className="mt-3 space-y-2">
-              {[
-                { t: "Potential Viral Event", v: 78, d: "Potensi viral content terkait isu transportasi publik dengan probabilitas 78% dalam 48 jam." },
-                { t: "High Volume Burst", v: 91, d: "Lonjakan volume artikel politik mencapai 300% di atas normal pada akhir pekan." },
-              ].map((i) => (
-                <div key={i.t} className="rounded-lg bg-black/30 p-3">
-                  <div className="flex items-center justify-between"><span className="text-sm font-semibold text-white">{i.t}</span><Pill tone="warning">{i.v}%</Pill></div>
-                  <p className="mt-1 text-xs text-white/80">{i.d}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Panel>
-
-      <div className="mt-6 grid gap-5 lg:grid-cols-2">
-        <Panel title="Model Performance">
-          <div className="space-y-4">
-            <Bar label="Accuracy" value={87} color="success" />
-            <Bar label="Precision" value={92} color="primary" />
-            <Bar label="Recall" value={84} color="violet" />
-            <Bar label="F1 Score" value={88} color="warning" />
-          </div>
-        </Panel>
-        <Panel title="Prediction Trends">
-          <div className="h-56">
+      <Panel className="mt-6" title="Trend Prediksi — 7 Hari ke Depan" icon={<Activity className="h-4 w-4" />} action={<Pill tone="info">Linear regression</Pill>}>
+        {loading ? <p className="py-10 text-center text-sm text-muted-foreground">Memuat…</p> : s.total === 0 ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">Belum ada data untuk prediksi.</p>
+        ) : (
+          <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={perf}>
+              <AreaChart data={trend}>
+                <defs>
+                  <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="oklch(0.78 0.18 195)" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="oklch(0.78 0.18 195)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 0.05)" />
-                <XAxis dataKey="k" stroke="oklch(0.7 0.025 240)" fontSize={10} />
+                <XAxis dataKey="d" stroke="oklch(0.7 0.025 240)" fontSize={11} />
                 <YAxis stroke="oklch(0.7 0.025 240)" fontSize={11} />
                 <Tooltip contentStyle={{ background: "oklch(0.18 0.03 252)", border: "1px solid oklch(1 0 0 / 0.1)", borderRadius: 8, fontSize: 12 }} />
-                <RBar dataKey="v" fill="oklch(0.78 0.18 195)" radius={[4, 4, 0, 0]} />
-              </BarChart>
+                <Area type="monotone" dataKey="actual" stroke="oklch(0.78 0.18 195)" fill="url(#pg)" strokeWidth={2} name="Aktual" />
+                <Area type="monotone" dataKey="predicted" stroke="oklch(0.82 0.18 80)" fill="none" strokeWidth={2} strokeDasharray="4 4" name="Prediksi" />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
-        </Panel>
-      </div>
+        )}
+      </Panel>
+
+      <Panel className="mt-6" title="Topik yang Diprediksi Naik" icon={<TrendingUp className="h-4 w-4" />}>
+        {topKeywords.length === 0 ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">Belum ada keyword di artikel untuk diprediksi.</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {topKeywords.map((k) => (
+              <li key={k.name} className="flex items-center justify-between py-3">
+                <div>
+                  <p className="font-semibold text-foreground">{k.name}</p>
+                  <p className="font-mono text-[11px] text-muted-foreground">{k.count} mentions saat ini</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-1.5 w-32 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full bg-gradient-cyan" style={{ width: `${Math.round((k.count / maxKw) * 100)}%` }} />
+                  </div>
+                  <Pill tone="info">{Math.round((k.count / maxKw) * 100)}%</Pill>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
     </PageShell>
   );
 }
