@@ -1,181 +1,127 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PageShell, Panel, MetricCard, Bar, Pill } from "@/components/PageShell";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
-import { Download, Settings, Globe, RefreshCw, ShieldCheck, Activity, Users, ArrowUp, ArrowDown } from "lucide-react";
-import { useActiveKeyword } from "@/hooks/use-active-keyword";
-import { evalExpression } from "@/lib/keyword-query";
+import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
+import { Globe, Activity, ShieldCheck, Users } from "lucide-react";
+import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 
 export const Route = createFileRoute("/media")({
   head: () => ({
     meta: [
       { title: "Media Analysis — PROPAM Command Center" },
-      { name: "description", content: "Monitoring kredibilitas, sentiment, dan performa sumber media secara real-time." },
+      { name: "description", content: "Performa sumber media dari news database." },
     ],
   }),
   component: MediaPage,
 });
 
-const sources = [
-  { code: "C", name: "CNN Indonesia", cat: "Nasional", art: 156, sent: 72, rel: 94, reach: "8.2M", eng: 87, trend: "+5.2%", relTone: "positive" as const },
-  { code: "K", name: "Kompas.com", cat: "Nasional", art: 134, sent: 78, rel: 96, reach: "12.1M", eng: 91, trend: "+3.8%", relTone: "positive" as const },
-  { code: "D", name: "Detik.com", cat: "Nasional", art: 189, sent: 65, rel: 88, reach: "15.3M", eng: 85, trend: "-2.1%", relTone: "positive" as const },
-  { code: "T", name: "Tempo.co", cat: "Politik", art: 98, sent: 81, rel: 92, reach: "5.7M", eng: 79, trend: "+7.3%", relTone: "positive" as const },
-  { code: "L", name: "Liputan6", cat: "Hiburan", art: 142, sent: 69, rel: 85, reach: "9.8M", eng: 82, trend: "+4.6%", relTone: "positive" as const },
-  { code: "T", name: "Tribunnews", cat: "Regional", art: 167, sent: 58, rel: 76, reach: "11.2M", eng: 73, trend: "-1.8%", relTone: "warning" as const },
-  { code: "O", name: "Okezone", cat: "Ekonomi", art: 123, sent: 63, rel: 79, reach: "7.4M", eng: 68, trend: "+2.9%", relTone: "warning" as const },
-  { code: "A", name: "Antara News", cat: "Nasional", art: 87, sent: 84, rel: 98, reach: "4.1M", eng: 71, trend: "+6.1%", relTone: "positive" as const },
-];
-
-const volume = [
-  { t: "00:00", a: 8, b: 12, c: 6, d: 3 },
-  { t: "04:00", a: 14, b: 22, c: 10, d: 5 },
-  { t: "08:00", a: 38, b: 48, c: 32, d: 18 },
-  { t: "12:00", a: 48, b: 56, c: 40, d: 24 },
-  { t: "16:00", a: 56, b: 62, c: 46, d: 28 },
-  { t: "20:00", a: 40, b: 50, c: 36, d: 22 },
-  { t: "24:00", a: 24, b: 32, c: 22, d: 14 },
-];
-
-const bias = [
-  { cat: "Nasional", n: 421, p: 68, ne: 22, neg: 10, score: 29 },
-  { cat: "Politik", n: 287, p: 45, ne: 35, neg: 20, score: 13 },
-  { cat: "Ekonomi", n: 356, p: 72, ne: 18, neg: 10, score: 31 },
-  { cat: "Teknologi", n: 198, p: 84, ne: 12, neg: 4, score: 40 },
-  { cat: "Olahraga", n: 164, p: 76, ne: 20, neg: 4, score: 36 },
-  { cat: "Hiburan", n: 234, p: 58, ne: 32, neg: 10, score: 24 },
-];
-
 function MediaPage() {
-  const { active } = useActiveKeyword();
-  const filteredSources = active
-    ? sources.filter((s) => evalExpression(active.expression, [s.name, s.cat].join(" ")))
-    : sources;
+  const { filtered, loading, active } = useFilteredArticles();
+  const s = summarize(filtered);
+  const max = s.sources[0]?.count ?? 1;
+
+  // Per-source sentiment breakdown
+  const perSource = s.sources.map((src) => {
+    const items = filtered.filter((a) => a.source === src.name);
+    const p = items.filter((a) => a.sentiment === "positive").length;
+    const n = items.filter((a) => a.sentiment === "negative").length;
+    const u = items.filter((a) => a.sentiment === "neutral").length;
+    const total = items.length;
+    return {
+      name: src.name,
+      count: src.count,
+      pos: total ? Math.round((p / total) * 100) : 0,
+      neg: total ? Math.round((n / total) * 100) : 0,
+      neu: total ? Math.round((u / total) * 100) : 0,
+    };
+  });
+
   return (
     <PageShell
       eyebrow="Source Intelligence"
       title="Analisis Media"
-      description="Monitoring kredibilitas, sentiment, dan performa sumber media. Hasil tersaring berdasarkan kata kunci aktif."
-      actions={
-        <>
-          <select className="rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground"><option>24 Jam</option><option>7 Hari</option></select>
-          <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40"><Download className="h-3.5 w-3.5" /> Export</button>
-          <button className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40"><Settings className="h-3.5 w-3.5" /> Konfigurasi</button>
-          <button className="inline-flex items-center gap-1.5 rounded-lg bg-foreground px-4 py-2 text-xs font-semibold text-background"><RefreshCw className="h-3.5 w-3.5" /> Auto Refresh</button>
-        </>
-      }
+      description="Performa & sentiment sumber media — dihitung langsung dari news database. Tersaring berdasarkan kata kunci aktif."
     >
-
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Total Artikel" value="1,096" accent="cyan" icon={<Activity className="h-5 w-5" />} delta="last 24h" />
-        <MetricCard label="Skor Kredibilitas" value="89%" accent="success" icon={<ShieldCheck className="h-5 w-5" />} delta="High trust" deltaTone="up" />
-        <MetricCard label="Sentiment Positif" value="68%" accent="violet" icon={<Activity className="h-5 w-5" />} delta="+5.2%" deltaTone="up" />
-        <MetricCard label="Total Jangkauan" value="73.8M" accent="amber" icon={<Users className="h-5 w-5" />} delta="reach impressions" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard label="Total Artikel" value={String(s.total)} accent="cyan" icon={<Activity className="h-5 w-5" />} hint={active ? "Filtered" : "All"} />
+        <MetricCard label="Sumber Unik" value={String(s.sources.length)} accent="success" icon={<Globe className="h-5 w-5" />} />
+        <MetricCard label="Sentiment Positif" value={`${s.pctPos}%`} accent="violet" icon={<ShieldCheck className="h-5 w-5" />} />
+        <MetricCard label="Kategori" value={String(s.categories.length)} accent="amber" icon={<Users className="h-5 w-5" />} />
       </div>
 
-      <Panel className="mt-6" title="Sumber Media & Kredibilitas" icon={<Globe className="h-4 w-4" />} action={<Pill tone="info">{filteredSources.length} of {sources.length} Sources</Pill>}>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-border font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                <th className="pb-3 pr-4">Media</th>
-                <th className="pb-3 pr-4">Artikel</th>
-                <th className="pb-3 pr-4">Sentiment</th>
-                <th className="pb-3 pr-4">Kredibilitas</th>
-                <th className="pb-3 pr-4">Jangkauan</th>
-                <th className="pb-3 pr-4">Engagement</th>
-                <th className="pb-3">Trend</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filteredSources.length === 0 ? (
-                <tr><td colSpan={7} className="py-6 text-center text-xs text-muted-foreground">Tidak ada sumber cocok dengan kata kunci aktif</td></tr>
-              ) : filteredSources.map((s, i) => (
-                <tr key={i} className="hover:bg-panel-elevated/60">
-                  <td className="py-3 pr-4">
-                    <div className="flex items-center gap-2.5">
-                      <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-cyan font-mono text-xs font-bold text-background">{s.code}</span>
-                      <div>
-                        <p className="font-semibold text-foreground">{s.name}</p>
-                        <p className="font-mono text-[10px] text-muted-foreground">{s.cat}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 pr-4 font-mono font-semibold text-foreground">{s.art}</td>
-                  <td className="py-3 pr-4">
-                    <div className="flex w-32 items-center gap-2">
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                        <div className="h-full bg-gradient-success" style={{ width: `${s.sent}%` }} />
-                      </div>
-                      <span className="font-mono text-[11px] text-foreground">{s.sent}%</span>
-                    </div>
-                  </td>
-                  <td className="py-3 pr-4"><Pill tone={s.relTone}>{s.rel}%</Pill></td>
-                  <td className="py-3 pr-4 font-mono text-foreground">{s.reach}</td>
-                  <td className="py-3 pr-4">
-                    <div className="flex w-28 items-center gap-2">
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                        <div className="h-full bg-gradient-cyan" style={{ width: `${s.eng}%` }} />
-                      </div>
-                      <span className="font-mono text-[11px] text-foreground">{s.eng}%</span>
-                    </div>
-                  </td>
-                  <td className={`py-3 font-mono text-xs ${s.trend.startsWith("-") ? "text-destructive" : "text-success"}`}>
-                    {s.trend.startsWith("-") ? <ArrowDown className="inline h-3 w-3" /> : <ArrowUp className="inline h-3 w-3" />} {s.trend}
-                  </td>
+      <Panel className="mt-6" title="Sumber Media" icon={<Globe className="h-4 w-4" />} action={<Pill tone="info">{s.sources.length} sumber</Pill>}>
+        {loading ? <p className="py-10 text-center text-sm text-muted-foreground">Memuat…</p> : perSource.length === 0 ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">{active ? "Tidak ada sumber cocok dengan filter aktif." : "Belum ada artikel di database."}</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-border font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <th className="pb-3 pr-4">Media</th>
+                  <th className="pb-3 pr-4">Artikel</th>
+                  <th className="pb-3 pr-4">Volume</th>
+                  <th className="pb-3 pr-4">Sentiment Breakdown</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {perSource.map((s2) => (
+                  <tr key={s2.name} className="hover:bg-panel-elevated/60">
+                    <td className="py-3 pr-4">
+                      <div className="flex items-center gap-2.5">
+                        <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-cyan font-mono text-xs font-bold text-background">{s2.name.charAt(0)}</span>
+                        <p className="font-semibold text-foreground">{s2.name}</p>
+                      </div>
+                    </td>
+                    <td className="py-3 pr-4 font-mono font-semibold text-foreground">{s2.count}</td>
+                    <td className="py-3 pr-4">
+                      <div className="flex w-32 items-center gap-2">
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                          <div className="h-full bg-gradient-cyan" style={{ width: `${Math.round((s2.count / max) * 100)}%` }} />
+                        </div>
+                        <span className="font-mono text-[11px] text-foreground">{Math.round((s2.count / max) * 100)}%</span>
+                      </div>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <div className="flex h-2 w-40 overflow-hidden rounded-full">
+                        <div className="bg-success" style={{ width: `${s2.pos}%` }} />
+                        <div className="bg-muted-foreground/50" style={{ width: `${s2.neu}%` }} />
+                        <div className="bg-destructive" style={{ width: `${s2.neg}%` }} />
+                      </div>
+                      <div className="mt-1 flex justify-between font-mono text-[10px] text-muted-foreground">
+                        <span>+{s2.pos}%</span><span>·{s2.neu}%</span><span>-{s2.neg}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Panel>
 
-      <Panel className="mt-6" title="Volume Pemberitaan per Waktu" icon={<Activity className="h-4 w-4" />}>
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={volume}>
-              <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 0.05)" />
-              <XAxis dataKey="t" stroke="oklch(0.7 0.025 240)" fontSize={11} />
-              <YAxis stroke="oklch(0.7 0.025 240)" fontSize={11} />
-              <Tooltip contentStyle={{ background: "oklch(0.18 0.03 252)", border: "1px solid oklch(1 0 0 / 0.1)", borderRadius: 8, fontSize: 12 }} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Line type="monotone" dataKey="a" name="CNN" stroke="oklch(0.78 0.18 195)" strokeWidth={2} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="b" name="Kompas" stroke="oklch(0.82 0.18 80)" strokeWidth={2} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="c" name="Detik" stroke="oklch(0.78 0.2 150)" strokeWidth={2} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="d" name="Tempo" stroke="oklch(0.65 0.24 22)" strokeWidth={2} dot={{ r: 3 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="mt-4 grid grid-cols-3 gap-3">
-          <Mini l="Total Artikel" v="686" tone="text-cyan" />
-          <Mini l="Share dan Engagement" v="7,590" tone="text-success" />
-          <Mini l="Kredibilitas Rata-rata" v="86%" tone="text-violet" />
-        </div>
-      </Panel>
-
-      <Panel className="mt-6" title="Analisis Bias per Kategori">
-        <ul className="divide-y divide-border">
-          {bias.map((b) => (
-            <li key={b.cat} className="grid grid-cols-1 gap-3 py-4 sm:grid-cols-4">
-              <div>
-                <p className="text-sm font-semibold text-foreground">{b.cat}</p>
-                <p className="font-mono text-[11px] text-muted-foreground">{b.n} artikel · Bias Score {b.score}%</p>
-              </div>
-              <Bar label="Positif" value={b.p} color="success" />
-              <Bar label="Netral" value={b.ne} color="neutral" />
-              <Bar label="Negatif" value={b.neg} color="danger" />
-            </li>
-          ))}
-        </ul>
+      <Panel className="mt-6" title="Distribusi Kategori">
+        {s.categories.length === 0 ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">Belum ada kategori artikel.</p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {s.categories.slice(0, 8).map((c) => {
+              const items = filtered.filter((a) => a.category === c.name);
+              const p = Math.round((items.filter((a) => a.sentiment === "positive").length / Math.max(1, items.length)) * 100);
+              const n = Math.round((items.filter((a) => a.sentiment === "negative").length / Math.max(1, items.length)) * 100);
+              const u = 100 - p - n;
+              return (
+                <li key={c.name} className="grid grid-cols-1 gap-3 py-4 sm:grid-cols-[1fr_auto_auto_auto]">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{c.name}</p>
+                    <p className="font-mono text-[11px] text-muted-foreground">{c.count} artikel</p>
+                  </div>
+                  <span className="font-mono text-xs text-success">+{p}% Pos</span>
+                  <span className="font-mono text-xs text-muted-foreground">{u}% Neu</span>
+                  <span className="font-mono text-xs text-destructive">-{n}% Neg</span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </Panel>
     </PageShell>
-  );
-}
-
-function Mini({ l, v, tone }: { l: string; v: string; tone: string }) {
-  return (
-    <div className="rounded-lg border border-border bg-panel-elevated p-3 text-center">
-      <p className={`font-display text-xl font-bold ${tone}`}>{v}</p>
-      <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{l}</p>
-    </div>
   );
 }
