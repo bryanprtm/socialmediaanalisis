@@ -249,18 +249,29 @@ export function HomeView() {
               }
             >
               <ul className="divide-y divide-border">
-                {activities.map((a, i) => (
-                  <li key={i} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-                    <span className={`mt-1.5 h-2 w-2 rounded-full ${a.dot} animate-pulse-dot`} />
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-medium text-foreground">{a.title}</p>
-                        <Pill tone="info">{a.tag}</Pill>
-                      </div>
-                      <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{a.time}</p>
-                    </div>
-                  </li>
-                ))}
+                {loading ? (
+                  <li className="py-6 text-center text-sm text-muted-foreground">Memuat…</li>
+                ) : recents.length === 0 ? (
+                  <li className="py-6 text-center text-sm text-muted-foreground">Belum ada artikel di database.</li>
+                ) : (
+                  recents.map((a) => {
+                    const dot = a.sentiment === "positive" ? "bg-success" : a.sentiment === "negative" ? "bg-danger" : "bg-cyan";
+                    const tag = (a.category ?? a.source).toUpperCase().slice(0, 12);
+                    const when = a.published_at ? new Date(a.published_at).toLocaleString("id-ID") : "—";
+                    return (
+                      <li key={a.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+                        <span className={`mt-1.5 h-2 w-2 rounded-full ${dot} animate-pulse-dot`} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="truncate text-sm font-medium text-foreground">{a.title}</p>
+                            <Pill tone="info">{tag}</Pill>
+                          </div>
+                          <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{a.source} · {when}</p>
+                        </div>
+                      </li>
+                    );
+                  })
+                )}
               </ul>
             </Panel>
           )}
