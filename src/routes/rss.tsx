@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
-import { Rss, Plus, Trash2, RefreshCw, CheckCircle2, AlertCircle, Globe, LogIn, Pencil, Save, X } from "lucide-react";
+import { Rss, Plus, Trash2, RefreshCw, CheckCircle2, AlertCircle, Globe, LogIn, Pencil, Save, X, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { syncRssFeed, syncAllRssFeeds } from "@/lib/rss-sync.functions";
 
 export const Route = createFileRoute("/rss")({
   head: () => ({
