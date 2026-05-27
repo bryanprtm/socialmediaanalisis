@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
-import { Rss, Plus, Trash2, RefreshCw, CheckCircle2, AlertCircle, Globe, LogIn, Pencil, Save, X } from "lucide-react";
+import { Rss, Plus, Trash2, RefreshCw, CheckCircle2, AlertCircle, Globe, LogIn, Pencil, Save, X, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { syncRssFeed, syncAllRssFeeds } from "@/lib/rss-sync.functions";
 
 export const Route = createFileRoute("/rss")({
   head: () => ({
@@ -48,6 +50,35 @@ function Page() {
   const [submitting, setSubmitting] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<Feed>>({});
+  const [syncing, setSyncing] = useState<string | null>(null);
+  const [syncingAll, setSyncingAll] = useState(false);
+  const syncOneFn = useServerFn(syncRssFeed);
+  const syncAllFn = useServerFn(syncAllRssFeeds);
+
+  async function syncOne(id: string) {
+    setSyncing(id);
+    try {
+      const r = await syncOneFn({ data: { feedId: id } });
+      if (r.error) toast.warning(`Sync selesai dengan peringatan: ${r.error}`);
+      else toast.success(`Sync berhasil: +${r.added} berita baru (dari ${r.total})`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Sync gagal");
+    } finally {
+      setSyncing(null);
+    }
+  }
+
+  async function syncAll() {
+    setSyncingAll(true);
+    try {
+      const r = await syncAllFn();
+      toast.success(`Sync selesai: +${r.totalAdded} berita baru dari ${r.feedCount} feed${r.errors ? ` (${r.errors} error)` : ""}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Sync gagal");
+    } finally {
+      setSyncingAll(false);
+    }
+  }
 
   async function load() {
     setLoading(true);
@@ -119,9 +150,16 @@ function Page() {
       title="RSS Manager"
       description="Kelola sumber RSS feed yang aktif dipantau pipeline berita."
       actions={
-        <button onClick={load} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40">
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          {isAuthenticated && (
+            <button onClick={syncAll} disabled={syncingAll} className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-cyan px-3 py-2 text-xs font-semibold text-background disabled:opacity-50">
+              <Download className={`h-3.5 w-3.5 ${syncingAll ? "animate-bounce" : ""}`} /> {syncingAll ? "Syncing…" : "Sync Semua"}
+            </button>
+          )}
+          <button onClick={load} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40">
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+          </button>
+        </div>
       }
     >
       {!isAuthenticated && (
@@ -207,6 +245,7 @@ function Page() {
                         <td className="px-2 py-3">
                           {isAuthenticated && (
                             <div className="flex items-center gap-1">
+                              <button onClick={() => syncOne(f.id)} disabled={syncing === f.id || syncingAll} className="rounded-md p-1.5 text-muted-foreground hover:bg-success/15 hover:text-success disabled:opacity-50" aria-label="sync" title="Sync feed ini"><Download className={`h-3.5 w-3.5 ${syncing === f.id ? "animate-bounce" : ""}`} /></button>
                               <button onClick={() => { setEditId(f.id); setDraft({ name: f.name, url: f.url, category: f.category }); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-primary/15 hover:text-primary" aria-label="edit"><Pencil className="h-3.5 w-3.5" /></button>
                               <button onClick={() => removeFeed(f.id)} className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/15 hover:text-destructive" aria-label="delete"><Trash2 className="h-3.5 w-3.5" /></button>
                             </div>
