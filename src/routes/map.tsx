@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { PageShell, Panel, MetricCard, Pill, Bar } from "@/components/PageShell";
-import { Map as MapIcon, MapPin, TrendingUp, Activity } from "lucide-react";
+import { Map as MapIcon, MapPin, TrendingUp, Activity, X, ExternalLink } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { IndonesiaMap, articleMatchesProvince } from "@/components/IndonesiaMap";
 
 export const Route = createFileRoute("/map")({
   head: () => ({
     meta: [
       { title: "Peta Indonesia — PROPAM" },
-      { name: "description", content: "Distribusi berita per region dari news database." },
+      { name: "description", content: "Distribusi berita per provinsi pada peta interaktif Indonesia." },
     ],
   }),
   component: Page,
@@ -16,42 +18,159 @@ export const Route = createFileRoute("/map")({
 function Page() {
   const { filtered, loading, active } = useFilteredArticles();
   const s = summarize(filtered);
-  const max = s.regions[0]?.count ?? 1;
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const provinceArticles = useMemo(
+    () => (selected ? filtered.filter((a) => articleMatchesProvince(a.region, selected)) : []),
+    [selected, filtered],
+  );
+
+  const provStats = useMemo(() => {
+    const pos = provinceArticles.filter((a) => a.sentiment === "positive").length;
+    const neg = provinceArticles.filter((a) => a.sentiment === "negative").length;
+    const neu = provinceArticles.filter((a) => a.sentiment === "neutral").length;
+    const total = provinceArticles.length;
+    const sources = new Map<string, number>();
+    for (const a of provinceArticles) sources.set(a.source, (sources.get(a.source) ?? 0) + 1);
+    return {
+      total,
+      pos,
+      neg,
+      neu,
+      pctPos: total ? Math.round((pos / total) * 100) : 0,
+      pctNeg: total ? Math.round((neg / total) * 100) : 0,
+      pctNeu: total ? Math.round((neu / total) * 100) : 0,
+      sources: [...sources.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5),
+    };
+  }, [provinceArticles]);
 
   return (
     <PageShell
       eyebrow="Geographic Intelligence"
       title="Peta Indonesia"
-      description="Distribusi berita per region — dihitung langsung dari news database. Tersaring berdasarkan kata kunci aktif."
+      description="Distribusi berita per provinsi — klik wilayah pada peta untuk melihat analisa berita."
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Region Terpantau" value={String(s.regions.length)} icon={<MapPin className="h-5 w-5" />} accent="cyan" hint={active ? "Filtered" : "All"} />
+        <MetricCard label="Provinsi Terpantau" value={String(s.regions.length)} icon={<MapPin className="h-5 w-5" />} accent="cyan" hint={active ? "Filtered" : "All"} />
         <MetricCard label="Total Artikel" value={String(s.total)} icon={<Activity className="h-5 w-5" />} accent="success" />
         <MetricCard label="Hotspot" value={s.regions[0]?.name ?? "—"} icon={<TrendingUp className="h-5 w-5" />} accent="amber" hint={`${s.regions[0]?.count ?? 0} mentions`} />
         <MetricCard label="Sentiment Positif" value={`${s.pctPos}%`} icon={<Activity className="h-5 w-5" />} accent="violet" />
       </div>
 
-      <Panel className="mt-6" title="Distribusi Region" icon={<MapIcon className="h-4 w-4" />}>
-        {loading ? <p className="py-10 text-center text-sm text-muted-foreground">Memuat…</p> : s.regions.length === 0 ? (
-          <p className="py-10 text-center text-sm text-muted-foreground">Belum ada artikel dengan label region. Tambahkan kolom region pada berita di News Database.</p>
+      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+        <Panel className="lg:col-span-2" title="Peta Provinsi Indonesia" icon={<MapIcon className="h-4 w-4" />}>
+          {loading ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">Memuat…</p>
+          ) : (
+            <IndonesiaMap articles={filtered} selected={selected} onSelect={setSelected} />
+          )}
+        </Panel>
+
+        <Panel title={selected ? `Analisa: ${selected}` : "Detail Provinsi"} icon={<MapPin className="h-4 w-4" />}>
+          {!selected ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">
+              Klik salah satu provinsi pada peta untuk melihat analisa berita.
+            </p>
+          ) : provStats.total === 0 ? (
+            <div className="space-y-3">
+              <button onClick={() => setSelected(null)} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary">
+                <X className="h-3 w-3" /> Tutup
+              </button>
+              <p className="py-6 text-center text-sm text-muted-foreground">Belum ada artikel terlabel untuk provinsi ini.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {provStats.total} artikel
+                </span>
+                <button onClick={() => setSelected(null)} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary">
+                  <X className="h-3 w-3" /> Tutup
+                </button>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-md border border-border bg-panel-elevated p-2">
+                  <div className="text-lg font-bold text-success">{provStats.pctPos}%</div>
+                  <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">Positif</div>
+                </div>
+                <div className="rounded-md border border-border bg-panel-elevated p-2">
+                  <div className="text-lg font-bold text-muted-foreground">{provStats.pctNeu}%</div>
+                  <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">Netral</div>
+                </div>
+                <div className="rounded-md border border-border bg-panel-elevated p-2">
+                  <div className="text-lg font-bold text-destructive">{provStats.pctNeg}%</div>
+                  <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">Negatif</div>
+                </div>
+              </div>
+
+              {provStats.sources.length > 0 && (
+                <div>
+                  <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Top Sumber</p>
+                  <div className="space-y-1.5">
+                    {provStats.sources.map(([name, count]) => (
+                      <Bar key={name} label={`${name} · ${count}`} value={Math.round((count / provStats.total) * 100)} color="primary" />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <p className="mb-2 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Artikel Terbaru</p>
+                <ul className="space-y-2">
+                  {provinceArticles.slice(0, 6).map((a) => (
+                    <li key={a.id} className="rounded-md border border-border bg-panel-elevated p-2">
+                      <a href={a.url} target="_blank" rel="noopener noreferrer" className="group flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="line-clamp-2 text-xs font-medium text-foreground group-hover:text-primary">{a.title}</p>
+                          <p className="mt-1 font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
+                            {a.source} · {a.published_at ? new Date(a.published_at).toLocaleDateString("id-ID") : "—"}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          {a.sentiment && (
+                            <Pill tone={a.sentiment === "positive" ? "positive" : a.sentiment === "negative" ? "warning" : "info"}>
+                              {a.sentiment}
+                            </Pill>
+                          )}
+                          <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-primary" />
+                        </div>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </Panel>
+      </div>
+
+      <Panel className="mt-6" title="Ranking Provinsi" icon={<MapIcon className="h-4 w-4" />}>
+        {s.regions.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            Belum ada artikel dengan label region. Tambahkan kolom region pada berita di News Database.
+          </p>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {s.regions.map((r, i) => {
-              const items = filtered.filter((a) => a.region === r.name);
-              const pos = items.filter((a) => a.sentiment === "positive").length;
-              const sentPct = items.length ? Math.round((pos / items.length) * 100) : 0;
+              const maxC = s.regions[0]?.count ?? 1;
               return (
-                <li key={r.name} className="rounded-lg border border-border bg-panel-elevated p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-primary">{String(i + 1).padStart(2, "0")}</span>
-                      <span className="text-sm font-semibold text-foreground">{r.name}</span>
+                <li key={r.name}>
+                  <button
+                    onClick={() => setSelected(r.name)}
+                    className="w-full rounded-lg border border-border bg-panel-elevated p-3 text-left transition hover:border-primary/60"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-foreground">
+                        <span className="mr-2 font-mono text-xs text-primary">{String(i + 1).padStart(2, "0")}</span>
+                        {r.name}
+                      </span>
+                      <Pill tone="info">{r.count}</Pill>
                     </div>
-                    <Pill tone={sentPct >= 60 ? "positive" : sentPct >= 40 ? "info" : "warning"}>{sentPct}% pos</Pill>
-                  </div>
-                  <div className="mt-3">
-                    <Bar label={`${r.count} artikel`} value={Math.round((r.count / max) * 100)} color="primary" />
-                  </div>
+                    <div className="mt-2">
+                      <Bar label={`${r.count} artikel`} value={Math.round((r.count / maxC) * 100)} color="primary" />
+                    </div>
+                  </button>
                 </li>
               );
             })}
