@@ -199,14 +199,10 @@ function Page() {
       actions={
         <div className="flex items-center gap-2">
           {isAuthenticated && (
-            <>
-              <button onClick={analyzeSentiment} disabled={analyzing} className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-violet-300 hover:bg-violet-500/20 disabled:opacity-50">
-                <Sparkles className={`h-3.5 w-3.5 ${analyzing ? "animate-pulse" : ""}`} /> {analyzing ? "Analyzing…" : "Analisa Sentimen"}
-              </button>
-              <button onClick={syncAll} disabled={syncing} className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-cyan px-3 py-2 text-xs font-semibold text-background disabled:opacity-50">
-                <Download className={`h-3.5 w-3.5 ${syncing ? "animate-bounce" : ""}`} /> {syncing ? "Syncing…" : "Sync RSS"}
-              </button>
-            </>
+            <span className="hidden items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground md:inline-flex">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+              Auto-sync · 1m
+            </span>
           )}
           <button onClick={load} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40">
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
