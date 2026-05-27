@@ -119,6 +119,25 @@ function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
+  // Auto sync RSS + analyze sentiment every 1 minute (admin only)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let cancelled = false;
+    const run = async () => {
+      if (cancelled) return;
+      await syncAll(true);
+      if (cancelled) return;
+      await analyzeSentiment(true);
+    };
+    run();
+    const id = setInterval(run, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
+
   async function addArticle(e: React.FormEvent) {
     e.preventDefault();
     if (!form.title || !form.url || !form.source) return toast.error("Title, URL, Source wajib");
