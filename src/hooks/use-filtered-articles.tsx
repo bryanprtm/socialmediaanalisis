@@ -41,13 +41,20 @@ export function useFilteredArticles() {
     let mounted = true;
     async function load() {
       setLoading(true);
-      const { data } = await supabase
-        .from("news_articles")
-        .select("*")
-        .order("published_at", { ascending: false })
-        .limit(1000);
+      const pageSize = 1000;
+      const all: Article[] = [];
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabase
+          .from("news_articles")
+          .select("*")
+          .order("published_at", { ascending: false })
+          .range(from, from + pageSize - 1);
+        if (error || !data || data.length === 0) break;
+        all.push(...(data as Article[]));
+        if (data.length < pageSize) break;
+      }
       if (mounted) {
-        setArticles((data ?? []) as Article[]);
+        setArticles(all);
         setLoading(false);
       }
     }
