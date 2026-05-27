@@ -2,13 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
-import { Database, FileText, Globe, RefreshCw, ExternalLink, Plus, AlertCircle, Pencil, Trash2, Save, X, LogIn, Download } from "lucide-react";
+import { Database, FileText, Globe, RefreshCw, ExternalLink, Plus, AlertCircle, Pencil, Trash2, Save, X, LogIn, Download, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveKeyword } from "@/hooks/use-active-keyword";
 import { evalExpression } from "@/lib/keyword-query";
 import { toast } from "sonner";
 import { syncAllRssFeeds } from "@/lib/rss-sync.functions";
+import { analyzeMissingSentiment } from "@/lib/sentiment-analysis.functions";
 
 export const Route = createFileRoute("/news")({
   head: () => ({
@@ -59,7 +60,9 @@ function Page() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<Article>>({});
   const [syncing, setSyncing] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const syncAllFn = useServerFn(syncAllRssFeeds);
+  const analyzeFn = useServerFn(analyzeMissingSentiment);
 
   async function syncAll() {
     setSyncing(true);
@@ -70,6 +73,19 @@ function Page() {
       toast.error(e?.message ?? "Sync gagal");
     } finally {
       setSyncing(false);
+    }
+  }
+
+  async function analyzeSentiment() {
+    setAnalyzing(true);
+    try {
+      const r = await analyzeFn({ data: { limit: 200 } });
+      toast.success(`Analisa selesai: ${r.updated}/${r.processed} berita terklasifikasi · ${r.remaining} sisa belum dianalisa`);
+      await load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Analisa gagal");
+    } finally {
+      setAnalyzing(false);
     }
   }
 
@@ -191,9 +207,14 @@ function Page() {
       actions={
         <div className="flex items-center gap-2">
           {isAuthenticated && (
-            <button onClick={syncAll} disabled={syncing} className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-cyan px-3 py-2 text-xs font-semibold text-background disabled:opacity-50">
-              <Download className={`h-3.5 w-3.5 ${syncing ? "animate-bounce" : ""}`} /> {syncing ? "Syncing…" : "Sync RSS"}
-            </button>
+            <>
+              <button onClick={analyzeSentiment} disabled={analyzing} className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs font-semibold text-violet-300 hover:bg-violet-500/20 disabled:opacity-50">
+                <Sparkles className={`h-3.5 w-3.5 ${analyzing ? "animate-pulse" : ""}`} /> {analyzing ? "Analyzing…" : "Analisa Sentimen"}
+              </button>
+              <button onClick={syncAll} disabled={syncing} className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-cyan px-3 py-2 text-xs font-semibold text-background disabled:opacity-50">
+                <Download className={`h-3.5 w-3.5 ${syncing ? "animate-bounce" : ""}`} /> {syncing ? "Syncing…" : "Sync RSS"}
+              </button>
+            </>
           )}
           <button onClick={load} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40">
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
