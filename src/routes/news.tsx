@@ -75,15 +75,27 @@ function Page() {
 
   async function load() {
     setLoading(true);
-    let q = supabase
-      .from("news_articles")
-      .select("*")
-      .order("published_at", { ascending: false })
-      .limit(100);
-    if (filter !== "all") q = q.eq("sentiment", filter);
-    const { data, error } = await q;
-    if (error) toast.error(error.message);
-    else setArticles((data ?? []) as Article[]);
+    const pageSize = 1000;
+    const all: Article[] = [];
+    let lastError: { message: string } | null = null;
+    for (let from = 0; ; from += pageSize) {
+      let q = supabase
+        .from("news_articles")
+        .select("*")
+        .order("published_at", { ascending: false })
+        .range(from, from + pageSize - 1);
+      if (filter !== "all") q = q.eq("sentiment", filter);
+      const { data, error } = await q;
+      if (error) {
+        lastError = error;
+        break;
+      }
+      if (!data || data.length === 0) break;
+      all.push(...(data as Article[]));
+      if (data.length < pageSize) break;
+    }
+    if (lastError) toast.error(lastError.message);
+    else setArticles(all);
     setLoading(false);
   }
 
