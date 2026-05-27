@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
-import { Database, FileText, Globe, RefreshCw, ExternalLink, Plus, AlertCircle, Pencil, Trash2, Save, X, LogIn } from "lucide-react";
+import { Database, FileText, Globe, RefreshCw, ExternalLink, Plus, AlertCircle, Pencil, Trash2, Save, X, LogIn, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveKeyword } from "@/hooks/use-active-keyword";
 import { evalExpression } from "@/lib/keyword-query";
 import { toast } from "sonner";
+import { syncAllRssFeeds } from "@/lib/rss-sync.functions";
 
 export const Route = createFileRoute("/news")({
   head: () => ({
@@ -56,6 +58,20 @@ function Page() {
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<Article>>({});
+  const [syncing, setSyncing] = useState(false);
+  const syncAllFn = useServerFn(syncAllRssFeeds);
+
+  async function syncAll() {
+    setSyncing(true);
+    try {
+      const r = await syncAllFn();
+      toast.success(`Sync selesai: +${r.totalAdded} berita baru dari ${r.feedCount} feed${r.errors ? ` (${r.errors} error)` : ""}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Sync gagal");
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   async function load() {
     setLoading(true);
@@ -161,9 +177,16 @@ function Page() {
       title="News Database"
       description="Penyimpanan terpusat seluruh berita yang dipantau — real-time, dapat dicari, terhubung ke pipeline AI."
       actions={
-        <button onClick={load} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40">
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          {isAuthenticated && (
+            <button onClick={syncAll} disabled={syncing} className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-cyan px-3 py-2 text-xs font-semibold text-background disabled:opacity-50">
+              <Download className={`h-3.5 w-3.5 ${syncing ? "animate-bounce" : ""}`} /> {syncing ? "Syncing…" : "Sync RSS"}
+            </button>
+          )}
+          <button onClick={load} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40">
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+          </button>
+        </div>
       }
     >
       {!isAuthenticated && (
