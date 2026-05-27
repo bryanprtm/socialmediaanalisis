@@ -150,9 +150,16 @@ function Page() {
       title="RSS Manager"
       description="Kelola sumber RSS feed yang aktif dipantau pipeline berita."
       actions={
-        <button onClick={load} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40">
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          {isAuthenticated && (
+            <button onClick={syncAll} disabled={syncingAll} className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-cyan px-3 py-2 text-xs font-semibold text-background disabled:opacity-50">
+              <Download className={`h-3.5 w-3.5 ${syncingAll ? "animate-bounce" : ""}`} /> {syncingAll ? "Syncing…" : "Sync Semua"}
+            </button>
+          )}
+          <button onClick={load} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-xs font-semibold text-foreground hover:border-primary/40">
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+          </button>
+        </div>
       }
     >
       {!isAuthenticated && (
