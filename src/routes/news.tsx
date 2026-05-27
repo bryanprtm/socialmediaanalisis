@@ -59,33 +59,25 @@ function Page() {
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<Article>>({});
-  const [syncing, setSyncing] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false);
   const syncAllFn = useServerFn(syncAllRssFeeds);
   const analyzeFn = useServerFn(analyzeMissingSentiment);
 
-  async function syncAll() {
-    setSyncing(true);
+  async function syncAll(silent = false) {
     try {
       const r = await syncAllFn();
-      toast.success(`Sync selesai: +${r.totalAdded} berita baru dari ${r.feedCount} feed${r.errors ? ` (${r.errors} error)` : ""}`);
+      if (!silent) toast.success(`Sync selesai: +${r.totalAdded} berita baru dari ${r.feedCount} feed${r.errors ? ` (${r.errors} error)` : ""}`);
     } catch (e: any) {
-      toast.error(e?.message ?? "Sync gagal");
-    } finally {
-      setSyncing(false);
+      if (!silent) toast.error(e?.message ?? "Sync gagal");
     }
   }
 
-  async function analyzeSentiment() {
-    setAnalyzing(true);
+  async function analyzeSentiment(silent = false) {
     try {
       const r = await analyzeFn({ data: { limit: 200 } });
-      toast.success(`Analisa selesai: ${r.updated}/${r.processed} berita terklasifikasi · ${r.remaining} sisa belum dianalisa`);
+      if (!silent) toast.success(`Analisa selesai: ${r.updated}/${r.processed} berita terklasifikasi · ${r.remaining} sisa belum dianalisa`);
       await load();
     } catch (e: any) {
-      toast.error(e?.message ?? "Analisa gagal");
-    } finally {
-      setAnalyzing(false);
+      if (!silent) toast.error(e?.message ?? "Analisa gagal");
     }
   }
 
