@@ -50,10 +50,35 @@ function Page() {
   const [submitting, setSubmitting] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<Feed>>({});
+  const [syncing, setSyncing] = useState<string | null>(null);
+  const [syncingAll, setSyncingAll] = useState(false);
+  const syncOneFn = useServerFn(syncRssFeed);
+  const syncAllFn = useServerFn(syncAllRssFeeds);
 
-  async function load() {
-    setLoading(true);
-    const { data, error } = await supabase.from("rss_feeds").select("*").order("name");
+  async function syncOne(id: string) {
+    setSyncing(id);
+    try {
+      const r = await syncOneFn({ data: { feedId: id } });
+      if (r.error) toast.warning(`Sync selesai dengan peringatan: ${r.error}`);
+      else toast.success(`Sync berhasil: +${r.added} berita baru (dari ${r.total})`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Sync gagal");
+    } finally {
+      setSyncing(null);
+    }
+  }
+
+  async function syncAll() {
+    setSyncingAll(true);
+    try {
+      const r = await syncAllFn();
+      toast.success(`Sync selesai: +${r.totalAdded} berita baru dari ${r.feedCount} feed${r.errors ? ` (${r.errors} error)` : ""}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Sync gagal");
+    } finally {
+      setSyncingAll(false);
+    }
+  }
     if (error) toast.error(error.message);
     else setFeeds((data ?? []) as Feed[]);
     setLoading(false);
