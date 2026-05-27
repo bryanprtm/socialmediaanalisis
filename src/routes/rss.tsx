@@ -79,6 +79,10 @@ function Page() {
       setSyncingAll(false);
     }
   }
+
+  async function load() {
+    setLoading(true);
+    const { data, error } = await supabase.from("rss_feeds").select("*").order("name");
     if (error) toast.error(error.message);
     else setFeeds((data ?? []) as Feed[]);
     setLoading(false);
