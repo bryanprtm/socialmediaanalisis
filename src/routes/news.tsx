@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
-import { Database, FileText, Globe, RefreshCw, ExternalLink, Plus, AlertCircle, Pencil, Trash2, Save, X, LogIn, Download, Sparkles } from "lucide-react";
+import { Database, FileText, Globe, RefreshCw, ExternalLink, Plus, AlertCircle, Pencil, Trash2, Save, X, LogIn } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveKeyword } from "@/hooks/use-active-keyword";
