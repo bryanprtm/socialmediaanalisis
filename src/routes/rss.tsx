@@ -245,6 +245,7 @@ function Page() {
                         <td className="px-2 py-3">
                           {isAuthenticated && (
                             <div className="flex items-center gap-1">
+                              <button onClick={() => syncOne(f.id)} disabled={syncing === f.id || syncingAll} className="rounded-md p-1.5 text-muted-foreground hover:bg-success/15 hover:text-success disabled:opacity-50" aria-label="sync" title="Sync feed ini"><Download className={`h-3.5 w-3.5 ${syncing === f.id ? "animate-bounce" : ""}`} /></button>
                               <button onClick={() => { setEditId(f.id); setDraft({ name: f.name, url: f.url, category: f.category }); }} className="rounded-md p-1.5 text-muted-foreground hover:bg-primary/15 hover:text-primary" aria-label="edit"><Pencil className="h-3.5 w-3.5" /></button>
                               <button onClick={() => removeFeed(f.id)} className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/15 hover:text-destructive" aria-label="delete"><Trash2 className="h-3.5 w-3.5" /></button>
                             </div>
