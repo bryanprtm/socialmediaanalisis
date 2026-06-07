@@ -393,6 +393,8 @@ function Page() {
                 );
               })}
             </ul>
+            </div>
+            </ul>
           )}
         </Panel>
 
