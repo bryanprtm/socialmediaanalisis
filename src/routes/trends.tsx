@@ -103,6 +103,12 @@ function TrendsPage() {
 
       <CategoryDistribution className="mt-6" articles={filtered} />
 
+      <div className="mt-6">
+        <KeywordIntelligence articles={filtered} />
+      </div>
+
+
+
 
       <AINarrative
         className="mt-6"
