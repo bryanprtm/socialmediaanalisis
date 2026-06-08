@@ -4,6 +4,7 @@ import { ResponsiveContainer, BarChart, Bar as RBar, XAxis, YAxis, CartesianGrid
 import { TrendingUp, Hash, Flame, Activity, Sparkles } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { AINarrative } from "@/components/AINarrative";
+import { CategoryDistribution } from "@/components/CategoryDistribution";
 
 export const Route = createFileRoute("/trends")({
   head: () => ({
