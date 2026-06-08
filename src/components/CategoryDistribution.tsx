@@ -127,6 +127,8 @@ export function CategoryDistribution({
                 outerRadius={90}
                 paddingAngle={2}
                 stroke="oklch(0.18 0.03 252)"
+                onClick={(d: { name?: string }) => d?.name && openCat(d.name)}
+                style={{ cursor: "pointer" }}
               >
                 {chartData.map((d, i) => (
                   <Cell key={i} fill={d.color} />
