@@ -35,7 +35,8 @@ export function CategoryDistribution({
   className?: string;
   maxRows?: number;
 }) {
-  const { rows, total, growth } = useMemo(() => {
+  const dialog = useArticleDialog();
+  const { rows, total, growth, byCat } = useMemo(() => {
     const total = articles.length;
     const map = new Map<string, Article[]>();
     for (const a of articles) {
