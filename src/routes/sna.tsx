@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
 import { Network } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/sna")({
   head: () => ({ meta: [{ title: "SNA Visualization — PROPAM" }, { name: "description", content: "Network analysis sumber media & kategori dari news database." }] }),
