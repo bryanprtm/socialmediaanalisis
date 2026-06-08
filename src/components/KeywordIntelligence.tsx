@@ -468,14 +468,15 @@ export function KeywordIntelligence({
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={hourly}
-                    onClick={(e: { activeLabel?: string }) => {
-                      if (!e?.activeLabel || !focusKw) return;
+                    onClick={(e) => {
+                      const label = e?.activeLabel != null ? String(e.activeLabel) : null;
+                      if (!label || !focusKw) return;
                       const items = focusItems.filter((a) => {
                         if (!a.published_at) return false;
                         const hr = new Date(a.published_at).toLocaleTimeString("id-ID", { hour: "2-digit" }) + ":00";
-                        return hr === e.activeLabel;
+                        return hr === label;
                       });
-                      openFiltered(`Keyword ${focusKw} · ${e.activeLabel}`, items);
+                      dialog.open({ title: `Keyword ${focusKw} · ${label}`, articles: items });
                     }}
                     style={{ cursor: "pointer" }}
                   >
