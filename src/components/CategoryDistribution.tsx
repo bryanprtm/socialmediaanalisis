@@ -87,8 +87,15 @@ export function CategoryDistribution({
       .filter((r) => r.growthPct >= 50 && r.todayCount >= 3)
       .slice(0, 3);
 
-    return { rows: rows.slice(0, maxRows), total, growth };
+    return { rows: rows.slice(0, maxRows), total, growth, byCat: map };
   }, [articles, maxRows]);
+
+  const openCat = (name: string) =>
+    dialog.open({
+      title: `Kategori: ${name}`,
+      subtitle: "Klik judul untuk membuka berita",
+      articles: byCat.get(name) ?? [],
+    });
 
   if (total === 0) {
     return (
