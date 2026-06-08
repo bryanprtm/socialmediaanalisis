@@ -257,40 +257,62 @@ export function HomeView() {
 
           {tab === "quick" && (
             <div className="grid gap-5 lg:grid-cols-2">
-              <Panel title="Sentiment Trend" icon={<TrendingUp className="h-4 w-4" />}>
-                <div className="space-y-4">
-                  <Bar label="Positif" value={s.pctPos} color="success" />
-                  <Bar label="Negatif" value={s.pctNeg} color="danger" />
-                  <Bar label="Netral" value={Math.max(0, 100 - s.pctPos - s.pctNeg)} color="neutral" />
-                </div>
-                <div className="mt-6 grid grid-cols-3 gap-2 border-t border-border pt-4">
-                  {[
-                    { l: "Total", v: String(s.total) },
-                    { l: "Sumber", v: String(s.sources.length) },
-                    { l: "Region", v: String(s.regions.length) },
-                  ].map((x) => (
-                    <div key={x.l} className="rounded-lg border border-border bg-panel-elevated p-3 text-center">
-                      <p className="font-display text-lg font-bold text-foreground">{x.v}</p>
-                      <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{x.l}</p>
+              <Panel
+                title="Sentiment Trend"
+                icon={<TrendingUp className="h-4 w-4" />}
+                action={
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-success">
+                    <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-success" /> Live
+                  </span>
+                }
+              >
+                {loading ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">Memuat…</p>
+                ) : s.total === 0 ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">Belum ada artikel di database.</p>
+                ) : (
+                  <>
+                    <div className="space-y-4">
+                      <Bar label={`Positif (${s.pos})`} value={s.pctPos} color="success" />
+                      <Bar label={`Negatif (${s.neg})`} value={s.pctNeg} color="danger" />
+                      <Bar label={`Netral (${s.neu})`} value={s.pctNeu} color="neutral" />
                     </div>
-                  ))}
-                </div>
+                    <div className="mt-6 grid grid-cols-3 gap-2 border-t border-border pt-4">
+                      {[
+                        { l: "Total", v: String(s.total) },
+                        { l: "Sumber", v: String(s.sources.length) },
+                        { l: "Region", v: String(s.regions.length) },
+                      ].map((x) => (
+                        <div key={x.l} className="rounded-lg border border-border bg-panel-elevated p-3 text-center">
+                          <p className="font-display text-lg font-bold text-foreground">{x.v}</p>
+                          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{x.l}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </Panel>
 
               <Panel title="Topik Trending" icon={<MessageSquare className="h-4 w-4" />}>
-                <ul className="space-y-3">
-                  {topics.map((t) => (
-                    <li key={t.name} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-panel-elevated p-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-foreground">{t.name}</p>
-                        <p className="font-mono text-[11px] text-muted-foreground">{t.mentions} mentions</p>
-                      </div>
-                      <Pill tone={t.sentiment === "positive" ? "positive" : t.sentiment === "negative" ? "negative" : "warning"}>
-                        {t.sentiment}
-                      </Pill>
-                    </li>
-                  ))}
-                </ul>
+                {loading ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">Memuat…</p>
+                ) : topics.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">Belum ada topik terdeteksi.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {topics.map((t) => (
+                      <li key={t.name} className="flex items-center justify-between gap-3 rounded-lg border border-border bg-panel-elevated p-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-foreground">{t.name}</p>
+                          <p className="font-mono text-[11px] text-muted-foreground">{t.mentions} mentions</p>
+                        </div>
+                        <Pill tone={t.sentiment === "positive" ? "positive" : t.sentiment === "negative" ? "negative" : "info"}>
+                          {t.sentiment}
+                        </Pill>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </Panel>
             </div>
           )}
