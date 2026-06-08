@@ -414,7 +414,8 @@ export function KeywordIntelligence({
               {data.perSource.map((s) => (
                 <li
                   key={s.source}
-                  className="flex items-center justify-between rounded-md border border-border bg-panel-elevated px-3 py-2 text-sm"
+                  onClick={() => openSource(s.source)}
+                  className="flex cursor-pointer items-center justify-between rounded-md border border-border bg-panel-elevated px-3 py-2 text-sm hover:border-primary/40"
                 >
                   <span className="truncate font-mono text-[11px] text-muted-foreground">{s.source}</span>
                   <span className="ml-3 truncate font-semibold text-foreground">{s.kw}</span>
