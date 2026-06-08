@@ -67,7 +67,7 @@ function MediaPage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {perSource.map((s2) => (
-                  <tr key={s2.name} className="hover:bg-panel-elevated/60">
+                  <tr key={s2.name} onClick={() => dialog.open({ title: `Sumber: ${s2.name}`, articles: filtered.filter((a) => a.source === s2.name) })} className="cursor-pointer hover:bg-panel-elevated/60">
                     <td className="py-3 pr-4">
                       <div className="flex items-center gap-2.5">
                         <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-cyan font-mono text-xs font-bold text-background">{s2.name.charAt(0)}</span>
