@@ -4,6 +4,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { Brain, Target, Hash, Newspaper } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { AINarrative } from "@/components/AINarrative";
+import { useArticleDialog } from "@/components/ArticleDialog";
 
 export const Route = createFileRoute("/sentiment")({
   head: () => ({
