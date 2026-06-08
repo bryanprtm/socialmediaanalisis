@@ -3,6 +3,7 @@ import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { Activity, Brain, AlertTriangle, TrendingUp } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/prediction")({
   head: () => ({ meta: [{ title: "Issue Prediction — PROPAM" }, { name: "description", content: "Prediksi tren berdasarkan news database." }] }),
@@ -13,21 +14,32 @@ function Page() {
   const { filtered, loading, active } = useFilteredArticles();
   const s = summarize(filtered);
 
-  // Build 14-day trend (last 7 historical + projected 7 via linear regression)
+  // 14 buckets: index 0..6 = last 7 historical days (today-6..today),
+  //             index 7..13 = projection (today+1..today+7)
   const dayBuckets = Array.from({ length: 14 }, (_, i) => {
     const day = new Date();
     day.setHours(0, 0, 0, 0);
-    day.setDate(day.getDate() - (13 - i));
+    day.setDate(day.getDate() - 6 + i);
     const start = day.getTime();
     const end = start + 86400000;
-    const count = i < 7
-      ? filtered.filter((a) => a.published_at && new Date(a.published_at).getTime() >= start && new Date(a.published_at).getTime() < end).length
+    const isPrediction = i > 6;
+    const count = !isPrediction
+      ? filtered.filter(
+          (a) =>
+            a.published_at &&
+            new Date(a.published_at).getTime() >= start &&
+            new Date(a.published_at).getTime() < end,
+        ).length
       : null;
-    return { d: day.toLocaleDateString("id-ID", { month: "short", day: "2-digit" }), v: count, isPrediction: i >= 7 };
+    return {
+      d: day.toLocaleDateString("id-ID", { month: "short", day: "2-digit" }),
+      v: count,
+      isPrediction,
+    };
   });
 
-  // Linear regression over first 7 to project next 7
-  const hist = dayBuckets.slice(0, 7).map((b, i) => ({ x: i, y: b.v as number }));
+  // Linear regression on historical 7 days (x = 0..6)
+  const hist = dayBuckets.slice(0, 7).map((b, i) => ({ x: i, y: (b.v as number) ?? 0 }));
   const n = hist.length;
   const sumX = hist.reduce((a, h) => a + h.x, 0);
   const sumY = hist.reduce((a, h) => a + h.y, 0);
@@ -36,13 +48,26 @@ function Page() {
   const denom = n * sumXX - sumX * sumX;
   const slope = denom === 0 ? 0 : (n * sumXY - sumX * sumY) / denom;
   const intercept = (sumY - slope * sumX) / n;
+
   const trend = dayBuckets.map((b, i) => ({
     d: b.d,
-    actual: i < 7 ? b.v : null,
+    actual: i <= 6 ? (b.v as number) : null,
+    // overlap last actual point with prediction line for continuity
     predicted: i >= 6 ? Math.max(0, Math.round(intercept + slope * i)) : null,
   }));
 
-  const growth = sumY > 0 ? Math.round((slope * 7 / (sumY / 7)) * 100) : 0;
+  // Metrics — based on last 7 historical days
+  const avgDaily = sumY / 7;
+  // Growth: compare projected last day (day 13) vs current avg, or use slope ratio
+  const firstHalf = hist.slice(0, 3).reduce((a, h) => a + h.y, 0) / 3;
+  const lastHalf = hist.slice(4, 7).reduce((a, h) => a + h.y, 0) / 3;
+  const growth = firstHalf > 0
+    ? Math.round(((lastHalf - firstHalf) / firstHalf) * 100)
+    : lastHalf > 0
+      ? 100
+      : 0;
+  const projectionHPlus7 = Math.max(0, Math.round(intercept + slope * 13));
+
   const topKeywords = s.keywords.slice(0, 6);
   const maxKw = topKeywords[0]?.count ?? 1;
 
@@ -50,9 +75,9 @@ function Page() {
     <PageShell eyebrow="Forecast" title="Prediksi Isu" description="Proyeksi volume artikel berdasarkan data 7 hari terakhir. Disaring berdasarkan kata kunci aktif.">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="Total Artikel" value={String(s.total)} accent="cyan" icon={<Activity className="h-5 w-5" />} hint={active ? "Filtered" : "All"} />
-        <MetricCard label="Tren Pertumbuhan" value={`${growth >= 0 ? "+" : ""}${growth}%`} accent={growth >= 0 ? "success" : "danger"} icon={<TrendingUp className="h-5 w-5" />} hint="7 hari" />
-        <MetricCard label="Rata-rata Harian" value={String(Math.round(sumY / 7))} accent="violet" icon={<Brain className="h-5 w-5" />} />
-        <MetricCard label="Proyeksi H+7" value={String(Math.max(0, Math.round(intercept + slope * 13)))} accent="amber" icon={<AlertTriangle className="h-5 w-5" />} />
+        <MetricCard label="Tren Pertumbuhan" value={`${growth >= 0 ? "+" : ""}${growth}%`} accent={growth >= 0 ? "success" : "danger"} icon={<TrendingUp className="h-5 w-5" />} hint="3 hari awal vs 3 hari akhir" />
+        <MetricCard label="Rata-rata Harian" value={avgDaily.toFixed(1)} accent="violet" icon={<Brain className="h-5 w-5" />} hint="7 hari terakhir" />
+        <MetricCard label="Proyeksi H+7" value={String(projectionHPlus7)} accent="amber" icon={<AlertTriangle className="h-5 w-5" />} hint="Regresi linier" />
       </div>
 
       <Panel className="mt-6" title="Trend Prediksi — 7 Hari ke Depan" icon={<Activity className="h-4 w-4" />} action={<Pill tone="info">Linear regression</Pill>}>
@@ -102,6 +127,22 @@ function Page() {
           </ul>
         )}
       </Panel>
+
+      <AINarrative
+        className="mt-6"
+        page="Prediksi Isu"
+        context={{
+          total_artikel: s.total,
+          historis_7_hari: hist.map((h) => h.y),
+          rata_rata_harian: Number(avgDaily.toFixed(2)),
+          tren_pertumbuhan_persen: growth,
+          slope_per_hari: Number(slope.toFixed(2)),
+          proyeksi_h_plus_7: projectionHPlus7,
+          proyeksi_7_hari: trend.slice(7).map((t) => t.predicted),
+          top_keywords: topKeywords.map((k) => `${k.name}(${k.count})`),
+          filter_aktif: active?.name ?? null,
+        }}
+      />
     </PageShell>
   );
 }

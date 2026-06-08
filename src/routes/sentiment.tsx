@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, Panel, MetricCard, Bar, Pill } from "@/components/PageShell";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
-import { Brain, Target, Activity, Hash, Newspaper } from "lucide-react";
+import { Brain, Target, Hash, Newspaper } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/sentiment")({
   head: () => ({
@@ -134,6 +135,23 @@ function SentimentPage() {
           )}
         </Panel>
       </div>
+
+      <AINarrative
+        className="mt-6"
+        page="Analisis Sentiment"
+        context={{
+          total: s.total,
+          positif: s.pos,
+          negatif: s.neg,
+          netral: s.neu,
+          persen_positif: s.pctPos,
+          persen_negatif: s.pctNeg,
+          persen_netral: s.pctNeu,
+          top_keywords: topKw.map((k) => `${k.name}(${k.count})`),
+          top_sumber: topSrc.map((src) => `${src.name}(${src.count})`),
+          filter_aktif: active?.name ?? null,
+        }}
+      />
     </PageShell>
   );
 }

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
 import { Globe, Activity, ShieldCheck, Users } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/media")({
   head: () => ({
@@ -122,6 +123,18 @@ function MediaPage() {
           </ul>
         )}
       </Panel>
+
+      <AINarrative
+        className="mt-6"
+        page="Analisis Media"
+        context={{
+          total_artikel: s.total,
+          sumber_unik: s.sources.length,
+          per_sumber: perSource.slice(0, 10),
+          per_kategori: s.categories.slice(0, 8).map((c) => `${c.name}(${c.count})`),
+          filter_aktif: active?.name ?? null,
+        }}
+      />
     </PageShell>
   );
 }

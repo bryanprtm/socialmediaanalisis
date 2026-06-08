@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
 import { Network } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/sna")({
   head: () => ({ meta: [{ title: "SNA Visualization — PROPAM" }, { name: "description", content: "Network analysis sumber media & kategori dari news database." }] }),
@@ -127,6 +128,19 @@ function Page() {
           )}
         </Panel>
       </div>
+
+      <AINarrative
+        className="mt-6"
+        page="Visualisasi Jaringan SNA"
+        context={{
+          nodes: nodes.length,
+          edges: links.length,
+          top_sumber: topSources.map((src) => `${src.name}(${src.count})`),
+          top_kategori: topCats.map((c) => `${c.name}(${c.count})`),
+          edge_terkuat: [...links].sort((a, b) => b.w - a.w).slice(0, 8).map((l) => `${l.a}↔${l.b}:${l.w}`),
+          filter_aktif: active?.name ?? null,
+        }}
+      />
     </PageShell>
   );
 }

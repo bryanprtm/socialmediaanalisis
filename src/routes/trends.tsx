@@ -3,6 +3,7 @@ import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
 import { ResponsiveContainer, BarChart, Bar as RBar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { TrendingUp, Hash, Flame, Activity, Sparkles } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/trends")({
   head: () => ({
@@ -115,6 +116,18 @@ function TrendsPage() {
           </div>
         )}
       </Panel>
+
+      <AINarrative
+        className="mt-6"
+        page="Trends & Topics"
+        context={{
+          total: s.total,
+          trending_topik: trending.map((k) => `${k.name}(${k.count})`),
+          top_kategori: topCats.map((c) => `${c.name}(${c.count})`),
+          evolusi_7_hari: days,
+          filter_aktif: active?.name ?? null,
+        }}
+      />
     </PageShell>
   );
 }
