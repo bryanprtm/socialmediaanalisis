@@ -4,6 +4,7 @@ import { Globe, Activity, ShieldCheck, Users } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { AINarrative } from "@/components/AINarrative";
 import { CategoryDistribution } from "@/components/CategoryDistribution";
+import { useArticleDialog } from "@/components/ArticleDialog";
 
 export const Route = createFileRoute("/media")({
   head: () => ({
