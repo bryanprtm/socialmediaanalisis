@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, Panel, MetricCard, Bar, Pill } from "@/components/PageShell";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
-import { Brain, Target, Activity, Hash, Newspaper } from "lucide-react";
+import { Brain, Target, Hash, Newspaper } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/sentiment")({
   head: () => ({
