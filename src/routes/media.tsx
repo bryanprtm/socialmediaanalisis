@@ -20,6 +20,7 @@ function MediaPage() {
   const { filtered, loading, active } = useFilteredArticles();
   const s = summarize(filtered);
   const max = s.sources[0]?.count ?? 1;
+  const dialog = useArticleDialog();
 
   // Per-source sentiment breakdown
   const perSource = s.sources.map((src) => {
