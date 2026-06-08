@@ -116,6 +116,18 @@ function TrendsPage() {
           </div>
         )}
       </Panel>
+
+      <AINarrative
+        className="mt-6"
+        page="Trends & Topics"
+        context={{
+          total: s.total,
+          trending_topik: trending.map((k) => `${k.name}(${k.count})`),
+          top_kategori: topCats.map((c) => `${c.name}(${c.count})`),
+          evolusi_7_hari: days,
+          filter_aktif: active?.name ?? null,
+        }}
+      />
     </PageShell>
   );
 }
