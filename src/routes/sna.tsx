@@ -5,7 +5,7 @@ import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/sna")({
-  head: () => ({ meta: [{ title: "SNA Visualization — PROPAM" }, { name: "description", content: "Network analysis sumber media & kategori dari news database." }] }),
+  head: () => ({ meta: [{ title: "SNA Visualization — TOC Sat Bantek" }, { name: "description", content: "Network analysis sumber media & kategori dari news database." }] }),
   component: Page,
 });
 

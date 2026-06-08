@@ -101,7 +101,7 @@ export function HomeView() {
           <div className="mt-8 flex items-center justify-center gap-5">
             <img
               src={logo}
-              alt="PROPAM logo"
+              alt="TOC Sat Bantek logo"
               width={88}
               height={88}
               className="h-20 w-20 drop-shadow-[0_0_24px_oklch(0.65_0.24_22_/_0.6)]"

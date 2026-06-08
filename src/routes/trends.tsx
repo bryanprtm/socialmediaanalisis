@@ -10,7 +10,7 @@ import { KeywordIntelligence } from "@/components/KeywordIntelligence";
 export const Route = createFileRoute("/trends")({
   head: () => ({
     meta: [
-      { title: "Trends & Topics — PROPAM Command Center" },
+      { title: "Trends & Topics — TOC Sat Bantek Command Center" },
       { name: "description", content: "Analisis trending topics dari news database." },
     ],
   }),

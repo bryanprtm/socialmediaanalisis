@@ -6,7 +6,7 @@ import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 export const Route = createFileRoute("/search")({
   head: () => ({
     meta: [
-      { title: "Search & Monitoring — PROPAM" },
+      { title: "Search & Monitoring — TOC Sat Bantek" },
       { name: "description", content: "Pencarian berita real-time dari news database." },
     ],
   }),

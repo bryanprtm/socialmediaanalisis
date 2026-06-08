@@ -14,7 +14,7 @@ import { analyzeMissingSentiment } from "@/lib/sentiment-analysis.functions";
 export const Route = createFileRoute("/news")({
   head: () => ({
     meta: [
-      { title: "News Database — PROPAM" },
+      { title: "News Database — TOC Sat Bantek" },
       { name: "description", content: "Database seluruh berita yang dipantau secara real-time." },
     ],
   }),

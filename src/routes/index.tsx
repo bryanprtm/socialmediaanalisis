@@ -5,7 +5,7 @@ import { HomeView } from "@/components/HomeView";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PROPAM Command Center — Home" },
+      { title: "TOC Sat Bantek Command Center — Home" },
       { name: "description", content: "Pusat kendali monitoring media & analisis sentiment AI Indonesia secara real-time." },
     ],
   }),

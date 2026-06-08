@@ -8,7 +8,7 @@ import logo from "@/assets/propam-logo.png";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Login — PROPAM Command Center" },
+      { title: "Login — TOC Sat Bantek Command Center" },
       { name: "description", content: "Masuk untuk mengelola berita dan pipeline monitoring." },
     ],
   }),
@@ -49,7 +49,7 @@ function AuthPage() {
 
           <div className="rounded-2xl border border-border bg-panel p-8 shadow-elevated">
             <div className="mb-6 flex flex-col items-center text-center">
-              <img src={logo} alt="PROPAM" className="mb-3 h-14 w-14 drop-shadow-[0_0_18px_oklch(0.82_0.18_80_/_0.5)]" />
+              <img src={logo} alt="TOC Sat Bantek" className="mb-3 h-14 w-14 drop-shadow-[0_0_18px_oklch(0.82_0.18_80_/_0.5)]" />
               <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-primary">Command Center Access</p>
               <h1 className="mt-1 font-display text-2xl font-bold text-foreground">Masuk ke Sistem</h1>
               <p className="mt-1 text-sm text-muted-foreground">Akses penuh untuk mengelola pipeline monitoring.</p>

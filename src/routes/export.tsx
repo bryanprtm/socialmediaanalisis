@@ -23,7 +23,7 @@ import { generateWhatsAppReport } from "@/lib/whatsapp-report.functions";
 export const Route = createFileRoute("/export")({
   head: () => ({
     meta: [
-      { title: "Export Report — PROPAM" },
+      { title: "Export Report — TOC Sat Bantek" },
       { name: "description", content: "Generate dan kirim laporan analitik ke WhatsApp, Email, atau download PDF." },
     ],
   }),

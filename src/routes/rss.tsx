@@ -11,7 +11,7 @@ import { syncRssFeed, syncAllRssFeeds } from "@/lib/rss-sync.functions";
 export const Route = createFileRoute("/rss")({
   head: () => ({
     meta: [
-      { title: "RSS Manager — PROPAM" },
+      { title: "RSS Manager — TOC Sat Bantek" },
       { name: "description", content: "Kelola sumber RSS feed yang aktif dipantau." },
     ],
   }),

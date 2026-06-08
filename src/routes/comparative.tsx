@@ -6,7 +6,7 @@ import { GitCompare, TrendingUp } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 
 export const Route = createFileRoute("/comparative")({
-  head: () => ({ meta: [{ title: "Comparative Analysis — PROPAM" }, { name: "description", content: "Bandingkan sumber media dari news database." }] }),
+  head: () => ({ meta: [{ title: "Comparative Analysis — TOC Sat Bantek" }, { name: "description", content: "Bandingkan sumber media dari news database." }] }),
   component: Page,
 });
 

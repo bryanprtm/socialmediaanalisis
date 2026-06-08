@@ -127,7 +127,7 @@ async function syncSingleFeed(feedId: string): Promise<{ added: number; total: n
   let xml: string;
   try {
     const res = await fetch(feed.url, {
-      headers: { "User-Agent": "Mozilla/5.0 PROPAM-RSS-Reader/1.0", Accept: "application/rss+xml, application/xml, text/xml, */*" },
+      headers: { "User-Agent": "Mozilla/5.0 TOC Sat Bantek-RSS-Reader/1.0", Accept: "application/rss+xml, application/xml, text/xml, */*" },
       signal: AbortSignal.timeout(20000),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

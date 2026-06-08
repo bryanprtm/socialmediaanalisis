@@ -9,7 +9,7 @@ import { useArticleDialog } from "@/components/ArticleDialog";
 export const Route = createFileRoute("/media")({
   head: () => ({
     meta: [
-      { title: "Media Analysis — PROPAM Command Center" },
+      { title: "Media Analysis — TOC Sat Bantek Command Center" },
       { name: "description", content: "Performa sumber media dari news database." },
     ],
   }),

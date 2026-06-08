@@ -6,7 +6,7 @@ import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/prediction")({
-  head: () => ({ meta: [{ title: "Issue Prediction — PROPAM" }, { name: "description", content: "Prediksi tren berdasarkan news database." }] }),
+  head: () => ({ meta: [{ title: "Issue Prediction — TOC Sat Bantek" }, { name: "description", content: "Prediksi tren berdasarkan news database." }] }),
   component: Page,
 });
 

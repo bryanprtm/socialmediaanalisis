@@ -40,7 +40,7 @@ export const Route = createRootRoute({
         content:
           "Platform monitoring berita & analisis sentiment berbasis AI untuk memahami opini publik dari berbagai sumber media di Indonesia secara real-time melalui RSS Feed.",
       },
-      { name: "author", content: "PROPAM" },
+      { name: "author", content: "TOC Sat Bantek" },
       { property: "og:title", content: "Monitoring Media & Analisis Sentiment AI" },
       {
         property: "og:description",
