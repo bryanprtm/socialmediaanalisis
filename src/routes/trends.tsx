@@ -5,6 +5,7 @@ import { TrendingUp, Hash, Flame, Activity, Sparkles } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { AINarrative } from "@/components/AINarrative";
 import { CategoryDistribution } from "@/components/CategoryDistribution";
+import { KeywordIntelligence } from "@/components/KeywordIntelligence";
 
 export const Route = createFileRoute("/trends")({
   head: () => ({
@@ -101,6 +102,12 @@ function TrendsPage() {
       </div>
 
       <CategoryDistribution className="mt-6" articles={filtered} />
+
+      <div className="mt-6">
+        <KeywordIntelligence articles={filtered} />
+      </div>
+
+
 
 
       <AINarrative

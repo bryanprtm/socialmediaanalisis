@@ -3,6 +3,7 @@ import { PageShell, Panel, MetricCard, Bar, Pill } from "@/components/PageShell"
 import { ResponsiveContainer, BarChart, Bar as RBar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { Newspaper, Globe, MessageCircle, Bell, RefreshCw, ChevronRight, TrendingUp, BarChart3, Activity, ExternalLink } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { KeywordIntelligence } from "@/components/KeywordIntelligence";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -149,7 +150,7 @@ function DashboardPage() {
           )}
         </Panel>
 
-        <Panel title="Trending Keywords" icon={<TrendingUp className="h-4 w-4" />}>
+        <Panel title="Trending Keywords (Ringkas)" icon={<TrendingUp className="h-4 w-4" />}>
           {topKeywords.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">Belum ada keyword terindeks di artikel.</p>
           ) : (
@@ -169,6 +170,8 @@ function DashboardPage() {
           )}
         </Panel>
       </div>
+
+      <KeywordIntelligence className="mt-6" articles={filtered} />
     </PageShell>
   );
 }
