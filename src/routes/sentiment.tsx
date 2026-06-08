@@ -127,7 +127,7 @@ function SentimentPage() {
                 const n = Math.round((items.filter((a) => a.sentiment === "negative").length / Math.max(1, items.length)) * 100);
                 const u = 100 - p - n;
                 return (
-                  <li key={src.name} className="rounded-lg border border-border bg-panel-elevated p-3">
+                  <li key={src.name} onClick={() => dialog.open({ title: `Sumber: ${src.name}`, articles: items })} className="cursor-pointer rounded-lg border border-border bg-panel-elevated p-3 hover:border-primary/40">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-semibold text-foreground">{src.name}</span>
                       <Pill tone="info">{src.count} artikel</Pill>
