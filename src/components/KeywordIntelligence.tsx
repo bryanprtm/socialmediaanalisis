@@ -523,7 +523,20 @@ export function KeywordIntelligence({
                           }}
                           formatter={(v) => [`${v}%`, ""]}
                         />
-                        <RBar dataKey="value" radius={[0, 4, 4, 0]} />
+                        <RBar
+                          dataKey="value"
+                          radius={[0, 4, 4, 0]}
+                          onClick={(d: { name?: string }) => {
+                            const m: Record<string, "positive" | "neutral" | "negative"> = {
+                              Positif: "positive",
+                              Netral: "neutral",
+                              Negatif: "negative",
+                            };
+                            const s = d?.name ? m[d.name] : undefined;
+                            if (s) openSentiment(s);
+                          }}
+                          style={{ cursor: "pointer" }}
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
