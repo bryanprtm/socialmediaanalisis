@@ -171,7 +171,7 @@ export function CategoryDistribution({
             </thead>
             <tbody className="divide-y divide-border">
               {rows.map((r, i) => (
-                <tr key={r.name} className="hover:bg-panel-elevated/60">
+                <tr key={r.name} onClick={() => openCat(r.name)} className="cursor-pointer hover:bg-panel-elevated/60">
                   <td className="py-2 pr-3">
                     <div className="flex items-center gap-2">
                       <span
