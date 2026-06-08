@@ -9,7 +9,7 @@ import { useArticleDialog } from "@/components/ArticleDialog";
 export const Route = createFileRoute("/sentiment")({
   head: () => ({
     meta: [
-      { title: "Sentiment Analysis — PROPAM Command Center" },
+      { title: "Sentiment Analysis — TOC Sat Bantek Command Center" },
       { name: "description", content: "Analisis sentiment dari news database." },
     ],
   }),

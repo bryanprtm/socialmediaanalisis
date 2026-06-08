@@ -8,7 +8,7 @@ import { IndonesiaMap, articleMatchesProvince } from "@/components/IndonesiaMap"
 export const Route = createFileRoute("/map")({
   head: () => ({
     meta: [
-      { title: "Peta Indonesia — PROPAM" },
+      { title: "Peta Indonesia — TOC Sat Bantek" },
       { name: "description", content: "Distribusi berita per provinsi pada peta interaktif Indonesia." },
     ],
   }),

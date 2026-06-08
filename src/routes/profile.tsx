@@ -3,7 +3,7 @@ import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
 import { User, Mail, Phone, MapPin, Shield, Activity, Clock, Award, Edit3, Camera, Key, Bell, FileText, Eye } from "lucide-react";
 
 export const Route = createFileRoute("/profile")({
-  head: () => ({ meta: [{ title: "Profile — PROPAM" }, { name: "description", content: "Profil pengguna PROPAM Command Center." }] }),
+  head: () => ({ meta: [{ title: "Profile — TOC Sat Bantek" }, { name: "description", content: "Profil pengguna TOC Sat Bantek Command Center." }] }),
   component: Page,
 });
 

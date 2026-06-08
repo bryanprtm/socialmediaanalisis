@@ -23,7 +23,7 @@ import { generateWhatsAppReport } from "@/lib/whatsapp-report.functions";
 export const Route = createFileRoute("/export")({
   head: () => ({
     meta: [
-      { title: "Export Report — PROPAM" },
+      { title: "Export Report — TOC Sat Bantek" },
       { name: "description", content: "Generate dan kirim laporan analitik ke WhatsApp, Email, atau download PDF." },
     ],
   }),
@@ -116,7 +116,7 @@ function Page() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `laporan-propam-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.download = `laporan-toc-sat-bantek-${new Date().toISOString().slice(0, 10)}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   }

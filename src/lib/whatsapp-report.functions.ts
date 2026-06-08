@@ -65,7 +65,7 @@ export const generateWhatsAppReport = createServerFn({ method: "POST" })
     );
 
     const system =
-      "Anda adalah analis intelijen media POLRI/PROPAM. Tulis Bahasa Indonesia formal, ringkas, profesional, dan tepat sasaran. Jangan menggunakan markdown atau heading. Output langsung paragraf saja, tanpa kata pembuka 'Berikut'.";
+      "Anda adalah analis intelijen media POLRI/TOC Sat Bantek. Tulis Bahasa Indonesia formal, ringkas, profesional, dan tepat sasaran. Jangan menggunakan markdown atau heading. Output langsung paragraf saja, tanpa kata pembuka 'Berikut'.";
 
     const [analisis, prediksi, rekomendasi, kesimpulan] = await Promise.all([
       callAI(system, `Data:\n${ctx}\n\nTulis 1-2 paragraf 'Analisis AI' yang menjelaskan pola sentiment, sumber dominan, dan temuan kunci.`, 450),
@@ -96,7 +96,7 @@ export const generateWhatsAppReport = createServerFn({ method: "POST" })
       data.filterAktif ? `_Filter aktif: ${data.filterAktif}_` : "",
       "",
       "*1. PENDAHULUAN*",
-      `Laporan ${periodeLabel.toLowerCase()} ini menyajikan rangkuman pemantauan media yang dilakukan secara otomatis oleh sistem PROPAM Command Center. Periode pengamatan mencakup ${data.total} artikel berita dari ${data.topSources.length} sumber media yang aktif.`,
+      `Laporan ${periodeLabel.toLowerCase()} ini menyajikan rangkuman pemantauan media yang dilakukan secara otomatis oleh sistem TOC Sat Bantek Command Center. Periode pengamatan mencakup ${data.total} artikel berita dari ${data.topSources.length} sumber media yang aktif.`,
       "",
       "*2. SUMBER DATA*",
       sumberData,
@@ -120,7 +120,7 @@ export const generateWhatsAppReport = createServerFn({ method: "POST" })
       kesimpulan || "(kesimpulan tidak tersedia)",
       "",
       "—",
-      "_Disusun otomatis oleh PROPAM Command Center · powered by Lovable AI_",
+      "_Disusun otomatis oleh TOC Sat Bantek Command Center · powered by Lovable AI_",
     ]
       .filter((line) => line !== undefined && line !== null)
       .join("\n");

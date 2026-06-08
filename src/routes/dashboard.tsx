@@ -8,7 +8,7 @@ import { KeywordIntelligence } from "@/components/KeywordIntelligence";
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard Analytics — PROPAM Command Center" },
+      { title: "Dashboard Analytics — TOC Sat Bantek Command Center" },
       { name: "description", content: "Real-time monitoring dashboard dari news database." },
     ],
   }),

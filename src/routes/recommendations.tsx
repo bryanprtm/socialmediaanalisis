@@ -5,7 +5,7 @@ import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/recommendations")({
-  head: () => ({ meta: [{ title: "Action Recommendations — PROPAM" }, { name: "description", content: "Rekomendasi berbasis data news database." }] }),
+  head: () => ({ meta: [{ title: "Action Recommendations — TOC Sat Bantek" }, { name: "description", content: "Rekomendasi berbasis data news database." }] }),
   component: Page,
 });
 

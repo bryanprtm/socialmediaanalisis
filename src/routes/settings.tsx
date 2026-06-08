@@ -3,7 +3,7 @@ import { PageShell, Panel, Pill, Bar } from "@/components/PageShell";
 import { Settings as SettingsIcon, Palette, Globe, Database, Shield, Bell, Zap, Save, RotateCcw, Cpu, HardDrive, Wifi } from "lucide-react";
 
 export const Route = createFileRoute("/settings")({
-  head: () => ({ meta: [{ title: "Settings — PROPAM" }, { name: "description", content: "Konfigurasi sistem PROPAM Command Center." }] }),
+  head: () => ({ meta: [{ title: "Settings — TOC Sat Bantek" }, { name: "description", content: "Konfigurasi sistem TOC Sat Bantek Command Center." }] }),
   component: Page,
 });
 
