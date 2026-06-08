@@ -3,6 +3,7 @@ import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
 import { Globe, Activity, ShieldCheck, Users } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { AINarrative } from "@/components/AINarrative";
+import { CategoryDistribution } from "@/components/CategoryDistribution";
 
 export const Route = createFileRoute("/media")({
   head: () => ({
