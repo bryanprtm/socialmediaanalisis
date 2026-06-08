@@ -3,6 +3,7 @@ import { PageShell, Panel, MetricCard, Bar, Pill } from "@/components/PageShell"
 import { ResponsiveContainer, BarChart, Bar as RBar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { Newspaper, Globe, MessageCircle, Bell, RefreshCw, ChevronRight, TrendingUp, BarChart3, Activity, ExternalLink } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { KeywordIntelligence } from "@/components/KeywordIntelligence";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
