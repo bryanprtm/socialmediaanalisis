@@ -583,7 +583,8 @@ export function KeywordIntelligence({
             {data.alerts.map((r) => (
               <li
                 key={r.name}
-                className="flex items-center justify-between rounded-lg border border-amber/30 bg-amber/5 px-3 py-2"
+                onClick={() => openKw(r.name)}
+                className="flex cursor-pointer items-center justify-between rounded-lg border border-amber/30 bg-amber/5 px-3 py-2 hover:bg-amber/10"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-foreground">{r.name}</p>
