@@ -87,6 +87,13 @@ export function KeywordIntelligence({
 }) {
   const [limit, setLimit] = useState<10 | 20 | 50>(10);
   const [focus, setFocus] = useState<string | null>(null);
+  const dialog = useArticleDialog();
+  const openKw = (kw: string) => {
+    const items = data.map.get(kw) ?? [];
+    dialog.open({ title: `Keyword: ${kw}`, subtitle: "Klik judul untuk membuka berita", articles: items });
+  };
+  const openFiltered = (title: string, items: Article[], subtitle?: string) =>
+    dialog.open({ title, subtitle, articles: items });
 
   const data = useMemo(() => {
     const today = dayBucket(new Date());
