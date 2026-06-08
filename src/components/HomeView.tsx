@@ -66,10 +66,17 @@ export function HomeView() {
     .sort((a, b) => new Date(b.published_at || 0).getTime() - new Date(a.published_at || 0).getTime())
     .slice(0, 6);
   const topics = s.keywords.slice(0, 5).map((k) => {
-    const items = filtered.filter((a) => (a.title + " " + (a.excerpt ?? "")).toLowerCase().includes(k.name.toLowerCase()));
+    const needle = k.name.toLowerCase();
+    const items = filtered.filter((a) => {
+      const hay = (a.title + " " + (a.excerpt ?? "") + " " + (a.content ?? "")).toLowerCase();
+      const inKw = (a.keywords ?? []).some((kw) => kw.toLowerCase() === needle);
+      return inKw || hay.includes(needle);
+    });
     const pos = items.filter((a) => a.sentiment === "positive").length;
     const neg = items.filter((a) => a.sentiment === "negative").length;
-    const sentiment: "positive" | "negative" | "warning" = pos > neg ? "positive" : neg > pos ? "negative" : "warning";
+    const neu = items.filter((a) => a.sentiment === "neutral").length;
+    const sentiment: "positive" | "negative" | "neutral" =
+      pos >= neg && pos >= neu ? "positive" : neg >= pos && neg >= neu ? "negative" : "neutral";
     return { name: k.name, mentions: k.count, sentiment };
   });
 
