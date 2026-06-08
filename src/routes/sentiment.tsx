@@ -19,10 +19,13 @@ export const Route = createFileRoute("/sentiment")({
 function SentimentPage() {
   const { filtered, loading, active } = useFilteredArticles();
   const s = summarize(filtered);
+  const dialog = useArticleDialog();
+  const openSent = (label: string, sent: "positive" | "neutral" | "negative") =>
+    dialog.open({ title: `Sentimen ${label}`, articles: filtered.filter((a) => a.sentiment === sent) });
   const dist = [
-    { name: "Positif", value: s.pos, color: "oklch(0.78 0.2 150)" },
-    { name: "Netral", value: s.neu, color: "oklch(0.65 0.02 240)" },
-    { name: "Negatif", value: s.neg, color: "oklch(0.65 0.24 22)" },
+    { name: "Positif", value: s.pos, color: "oklch(0.78 0.2 150)", sent: "positive" as const },
+    { name: "Netral", value: s.neu, color: "oklch(0.65 0.02 240)", sent: "neutral" as const },
+    { name: "Negatif", value: s.neg, color: "oklch(0.65 0.24 22)", sent: "negative" as const },
   ];
   const topKw = s.keywords.slice(0, 8);
   const topSrc = s.sources.slice(0, 6);
