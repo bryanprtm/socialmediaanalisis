@@ -58,31 +58,33 @@ function Page() {
           {loading ? <p className="py-10 text-center text-sm text-muted-foreground">Memuat…</p> : results.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">{active ? "Tidak ada hasil cocok." : "Belum ada artikel di database."}</p>
           ) : (
-            <ul className="divide-y divide-border">
-              {results.map((r) => (
-                <li key={r.id} className="group py-4 first:pt-0 last:pb-0">
-                  <div className="flex items-start gap-4">
-                    <div className="hidden sm:block">
-                      <div className="rounded-lg border border-border bg-panel-elevated p-2.5"><FileText className="h-4 w-4 text-primary" /></div>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <h3 className="font-display text-sm font-semibold text-foreground group-hover:text-primary">{r.title}</h3>
-                        {r.sentiment && <Pill tone={r.sentiment === "positive" ? "positive" : r.sentiment === "negative" ? "negative" : "neutral"}>{r.sentiment}</Pill>}
+            <div className="max-h-[560px] overflow-y-auto pr-2">
+              <ul className="divide-y divide-border">
+                {results.map((r) => (
+                  <li key={r.id} className="group py-4 first:pt-0 last:pb-0">
+                    <div className="flex items-start gap-4">
+                      <div className="hidden sm:block">
+                        <div className="rounded-lg border border-border bg-panel-elevated p-2.5"><FileText className="h-4 w-4 text-primary" /></div>
                       </div>
-                      {r.excerpt && <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">{r.excerpt}</p>}
-                      <div className="mt-3 flex flex-wrap items-center gap-3 font-mono text-[11px] text-muted-foreground">
-                        <span className="text-primary">{r.source}</span>
-                        {r.category && <><span>·</span><Pill tone="info">{r.category}</Pill></>}
-                        <a href={r.url} target="_blank" rel="noreferrer" className="ml-auto inline-flex items-center gap-1 text-primary hover:underline">
-                          Read <ExternalLink className="h-3 w-3" />
-                        </a>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <h3 className="font-display text-sm font-semibold text-foreground group-hover:text-primary">{r.title}</h3>
+                          {r.sentiment && <Pill tone={r.sentiment === "positive" ? "positive" : r.sentiment === "negative" ? "negative" : "neutral"}>{r.sentiment}</Pill>}
+                        </div>
+                        {r.excerpt && <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">{r.excerpt}</p>}
+                        <div className="mt-3 flex flex-wrap items-center gap-3 font-mono text-[11px] text-muted-foreground">
+                          <span className="text-primary">{r.source}</span>
+                          {r.category && <><span>·</span><Pill tone="info">{r.category}</Pill></>}
+                          <a href={r.url} target="_blank" rel="noreferrer" className="ml-auto inline-flex items-center gap-1 text-primary hover:underline">
+                            Read <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </Panel>
 
