@@ -466,7 +466,19 @@ export function KeywordIntelligence({
               </p>
               <div className="h-44">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={hourly}>
+                  <LineChart
+                    data={hourly}
+                    onClick={(e: { activeLabel?: string }) => {
+                      if (!e?.activeLabel || !focusKw) return;
+                      const items = focusItems.filter((a) => {
+                        if (!a.published_at) return false;
+                        const hr = new Date(a.published_at).toLocaleTimeString("id-ID", { hour: "2-digit" }) + ":00";
+                        return hr === e.activeLabel;
+                      });
+                      openFiltered(`Keyword ${focusKw} · ${e.activeLabel}`, items);
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 0.05)" />
                     <XAxis dataKey="t" stroke="oklch(0.7 0.025 240)" fontSize={10} interval={2} />
                     <YAxis stroke="oklch(0.7 0.025 240)" fontSize={10} allowDecimals={false} />
