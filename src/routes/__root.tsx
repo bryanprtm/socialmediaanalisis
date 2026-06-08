@@ -1,6 +1,7 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts, useLocation, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { ActiveKeywordProvider } from "@/hooks/use-active-keyword";
+import { ArticleDialogProvider } from "@/components/ArticleDialog";
 
 import appCss from "../styles.css?url";
 
