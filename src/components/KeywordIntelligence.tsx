@@ -386,7 +386,7 @@ export function KeywordIntelligence({
                   className="flex items-center justify-between gap-3 rounded-lg border border-border bg-panel-elevated p-2.5"
                 >
                   <button
-                    onClick={() => setFocus(r.name)}
+                    onClick={() => { setFocus(r.name); openKw(r.name); }}
                     className="min-w-0 text-left"
                   >
                     <p className="truncate text-sm font-semibold text-foreground">{r.name}</p>
