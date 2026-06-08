@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Panel, Pill } from "@/components/PageShell";
 import type { Article } from "@/hooks/use-filtered-articles";
+import { useArticleDialog } from "@/components/ArticleDialog";
 
 const PALETTE = [
   "oklch(0.78 0.18 195)",
