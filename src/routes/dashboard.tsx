@@ -150,7 +150,7 @@ function DashboardPage() {
           )}
         </Panel>
 
-        <Panel title="Trending Keywords" icon={<TrendingUp className="h-4 w-4" />}>
+        <Panel title="Trending Keywords (Ringkas)" icon={<TrendingUp className="h-4 w-4" />}>
           {topKeywords.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">Belum ada keyword terindeks di artikel.</p>
           ) : (
@@ -170,6 +170,8 @@ function DashboardPage() {
           )}
         </Panel>
       </div>
+
+      <KeywordIntelligence className="mt-6" articles={filtered} />
     </PageShell>
   );
 }
