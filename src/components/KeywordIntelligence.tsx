@@ -199,6 +199,29 @@ export function KeywordIntelligence({
   const focusKw = focus ?? data.topRows[0]?.name ?? null;
   const focusItems = focusKw ? data.map.get(focusKw) ?? [] : [];
 
+  const openKw = (kw: string) => {
+    dialog.open({
+      title: `Keyword: ${kw}`,
+      subtitle: "Klik judul untuk membuka berita",
+      articles: data.map.get(kw) ?? [],
+    });
+  };
+  const openSource = (source: string) =>
+    dialog.open({
+      title: `Sumber: ${source}`,
+      articles: articles.filter((a) => a.source === source),
+    });
+  const openRegion = (region: string) =>
+    dialog.open({
+      title: `Wilayah: ${region}`,
+      articles: articles.filter((a) => a.region === region),
+    });
+  const openSentiment = (sent: "positive" | "neutral" | "negative") =>
+    dialog.open({
+      title: `Sentimen ${sent} · Keyword: ${focusKw ?? "-"}`,
+      articles: focusItems.filter((a) => a.sentiment === sent),
+    });
+
   // Hourly trend (24h) for focus keyword
   const hourly = useMemo(() => {
     const now = new Date();
