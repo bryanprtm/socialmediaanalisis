@@ -3,6 +3,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recha
 import { PieChart as PieIcon, AlertTriangle, TrendingUp } from "lucide-react";
 import { Panel, Pill } from "@/components/PageShell";
 import type { Article } from "@/hooks/use-filtered-articles";
+import { useArticleDialog } from "@/components/ArticleDialog";
 
 const PALETTE = [
   "oklch(0.78 0.18 195)",
@@ -34,7 +35,8 @@ export function CategoryDistribution({
   className?: string;
   maxRows?: number;
 }) {
-  const { rows, total, growth } = useMemo(() => {
+  const dialog = useArticleDialog();
+  const { rows, total, growth, byCat } = useMemo(() => {
     const total = articles.length;
     const map = new Map<string, Article[]>();
     for (const a of articles) {
@@ -85,8 +87,15 @@ export function CategoryDistribution({
       .filter((r) => r.growthPct >= 50 && r.todayCount >= 3)
       .slice(0, 3);
 
-    return { rows: rows.slice(0, maxRows), total, growth };
+    return { rows: rows.slice(0, maxRows), total, growth, byCat: map };
   }, [articles, maxRows]);
+
+  const openCat = (name: string) =>
+    dialog.open({
+      title: `Kategori: ${name}`,
+      subtitle: "Klik judul untuk membuka berita",
+      articles: byCat.get(name) ?? [],
+    });
 
   if (total === 0) {
     return (
@@ -118,6 +127,8 @@ export function CategoryDistribution({
                 outerRadius={90}
                 paddingAngle={2}
                 stroke="oklch(0.18 0.03 252)"
+                onClick={(d: { name?: string }) => d?.name && openCat(d.name)}
+                style={{ cursor: "pointer" }}
               >
                 {chartData.map((d, i) => (
                   <Cell key={i} fill={d.color} />
@@ -160,7 +171,7 @@ export function CategoryDistribution({
             </thead>
             <tbody className="divide-y divide-border">
               {rows.map((r, i) => (
-                <tr key={r.name} className="hover:bg-panel-elevated/60">
+                <tr key={r.name} onClick={() => openCat(r.name)} className="cursor-pointer hover:bg-panel-elevated/60">
                   <td className="py-2 pr-3">
                     <div className="flex items-center gap-2">
                       <span

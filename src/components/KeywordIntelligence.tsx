@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Panel, Pill } from "@/components/PageShell";
 import type { Article } from "@/hooks/use-filtered-articles";
+import { useArticleDialog } from "@/components/ArticleDialog";
 
 const PALETTE = [
   "oklch(0.78 0.18 195)",
@@ -86,6 +87,7 @@ export function KeywordIntelligence({
 }) {
   const [limit, setLimit] = useState<10 | 20 | 50>(10);
   const [focus, setFocus] = useState<string | null>(null);
+  const dialog = useArticleDialog();
 
   const data = useMemo(() => {
     const today = dayBucket(new Date());
@@ -197,6 +199,29 @@ export function KeywordIntelligence({
   const focusKw = focus ?? data.topRows[0]?.name ?? null;
   const focusItems = focusKw ? data.map.get(focusKw) ?? [] : [];
 
+  const openKw = (kw: string) => {
+    dialog.open({
+      title: `Keyword: ${kw}`,
+      subtitle: "Klik judul untuk membuka berita",
+      articles: data.map.get(kw) ?? [],
+    });
+  };
+  const openSource = (source: string) =>
+    dialog.open({
+      title: `Sumber: ${source}`,
+      articles: articles.filter((a) => a.source === source),
+    });
+  const openRegion = (region: string) =>
+    dialog.open({
+      title: `Wilayah: ${region}`,
+      articles: articles.filter((a) => a.region === region),
+    });
+  const openSentiment = (sent: "positive" | "neutral" | "negative") =>
+    dialog.open({
+      title: `Sentimen ${sent} · Keyword: ${focusKw ?? "-"}`,
+      articles: focusItems.filter((a) => a.sentiment === sent),
+    });
+
   // Hourly trend (24h) for focus keyword
   const hourly = useMemo(() => {
     const now = new Date();
@@ -285,7 +310,7 @@ export function KeywordIntelligence({
                 <tr
                   key={r.name}
                   className={`cursor-pointer hover:bg-panel-elevated/60 ${focusKw === r.name ? "bg-panel-elevated/40" : ""}`}
-                  onClick={() => setFocus(r.name)}
+                  onClick={() => { setFocus(r.name); openKw(r.name); }}
                 >
                   <td className="py-2 pr-3 font-mono text-xs text-primary">{i + 1}</td>
                   <td className="py-2 pr-3 font-semibold text-foreground">{r.name}</td>
@@ -333,7 +358,7 @@ export function KeywordIntelligence({
               return (
                 <button
                   key={r.name}
-                  onClick={() => setFocus(r.name)}
+                  onClick={() => { setFocus(r.name); openKw(r.name); }}
                   className="font-display font-bold leading-tight transition hover:opacity-100"
                   style={{
                     fontSize: `${size}px`,
@@ -361,7 +386,7 @@ export function KeywordIntelligence({
                   className="flex items-center justify-between gap-3 rounded-lg border border-border bg-panel-elevated p-2.5"
                 >
                   <button
-                    onClick={() => setFocus(r.name)}
+                    onClick={() => { setFocus(r.name); openKw(r.name); }}
                     className="min-w-0 text-left"
                   >
                     <p className="truncate text-sm font-semibold text-foreground">{r.name}</p>
@@ -389,7 +414,8 @@ export function KeywordIntelligence({
               {data.perSource.map((s) => (
                 <li
                   key={s.source}
-                  className="flex items-center justify-between rounded-md border border-border bg-panel-elevated px-3 py-2 text-sm"
+                  onClick={() => openSource(s.source)}
+                  className="flex cursor-pointer items-center justify-between rounded-md border border-border bg-panel-elevated px-3 py-2 text-sm hover:border-primary/40"
                 >
                   <span className="truncate font-mono text-[11px] text-muted-foreground">{s.source}</span>
                   <span className="ml-3 truncate font-semibold text-foreground">{s.kw}</span>
@@ -409,7 +435,8 @@ export function KeywordIntelligence({
               {data.perRegion.map((s) => (
                 <li
                   key={s.region}
-                  className="flex items-center justify-between rounded-md border border-border bg-panel-elevated px-3 py-2 text-sm"
+                  onClick={() => openRegion(s.region)}
+                  className="flex cursor-pointer items-center justify-between rounded-md border border-border bg-panel-elevated px-3 py-2 text-sm hover:border-primary/40"
                 >
                   <span className="truncate font-mono text-[11px] text-muted-foreground">{s.region}</span>
                   <span className="ml-3 truncate font-semibold text-foreground">{s.kw}</span>
@@ -439,7 +466,20 @@ export function KeywordIntelligence({
               </p>
               <div className="h-44">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={hourly}>
+                  <LineChart
+                    data={hourly}
+                    onClick={(e) => {
+                      const label = e?.activeLabel != null ? String(e.activeLabel) : null;
+                      if (!label || !focusKw) return;
+                      const items = focusItems.filter((a) => {
+                        if (!a.published_at) return false;
+                        const hr = new Date(a.published_at).toLocaleTimeString("id-ID", { hour: "2-digit" }) + ":00";
+                        return hr === label;
+                      });
+                      dialog.open({ title: `Keyword ${focusKw} · ${label}`, articles: items });
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 0.05)" />
                     <XAxis dataKey="t" stroke="oklch(0.7 0.025 240)" fontSize={10} interval={2} />
                     <YAxis stroke="oklch(0.7 0.025 240)" fontSize={10} allowDecimals={false} />
@@ -483,7 +523,20 @@ export function KeywordIntelligence({
                           }}
                           formatter={(v) => [`${v}%`, ""]}
                         />
-                        <RBar dataKey="value" radius={[0, 4, 4, 0]} />
+                        <RBar
+                          dataKey="value"
+                          radius={[0, 4, 4, 0]}
+                          onClick={(d: { name?: string }) => {
+                            const m: Record<string, "positive" | "neutral" | "negative"> = {
+                              Positif: "positive",
+                              Netral: "neutral",
+                              Negatif: "negative",
+                            };
+                            const s = d?.name ? m[d.name] : undefined;
+                            if (s) openSentiment(s);
+                          }}
+                          style={{ cursor: "pointer" }}
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -505,7 +558,7 @@ export function KeywordIntelligence({
                       className="flex items-center justify-between rounded-md border border-border bg-panel-elevated px-2.5 py-1.5"
                     >
                       <button
-                        onClick={() => setFocus(r.name)}
+                        onClick={() => { setFocus(r.name); openKw(r.name); }}
                         className="truncate text-left text-sm font-semibold text-foreground hover:text-primary"
                       >
                         {r.name}
@@ -530,7 +583,8 @@ export function KeywordIntelligence({
             {data.alerts.map((r) => (
               <li
                 key={r.name}
-                className="flex items-center justify-between rounded-lg border border-amber/30 bg-amber/5 px-3 py-2"
+                onClick={() => openKw(r.name)}
+                className="flex cursor-pointer items-center justify-between rounded-lg border border-amber/30 bg-amber/5 px-3 py-2 hover:bg-amber/10"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-foreground">{r.name}</p>

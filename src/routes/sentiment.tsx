@@ -4,6 +4,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { Brain, Target, Hash, Newspaper } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { AINarrative } from "@/components/AINarrative";
+import { useArticleDialog } from "@/components/ArticleDialog";
 
 export const Route = createFileRoute("/sentiment")({
   head: () => ({
@@ -18,10 +19,13 @@ export const Route = createFileRoute("/sentiment")({
 function SentimentPage() {
   const { filtered, loading, active } = useFilteredArticles();
   const s = summarize(filtered);
+  const dialog = useArticleDialog();
+  const openSent = (label: string, sent: "positive" | "neutral" | "negative") =>
+    dialog.open({ title: `Sentimen ${label}`, articles: filtered.filter((a) => a.sentiment === sent) });
   const dist = [
-    { name: "Positif", value: s.pos, color: "oklch(0.78 0.2 150)" },
-    { name: "Netral", value: s.neu, color: "oklch(0.65 0.02 240)" },
-    { name: "Negatif", value: s.neg, color: "oklch(0.65 0.24 22)" },
+    { name: "Positif", value: s.pos, color: "oklch(0.78 0.2 150)", sent: "positive" as const },
+    { name: "Netral", value: s.neu, color: "oklch(0.65 0.02 240)", sent: "neutral" as const },
+    { name: "Negatif", value: s.neg, color: "oklch(0.65 0.24 22)", sent: "negative" as const },
   ];
   const topKw = s.keywords.slice(0, 8);
   const topSrc = s.sources.slice(0, 6);
@@ -48,7 +52,15 @@ function SentimentPage() {
               <div className="h-52">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={dist.filter((d) => d.value > 0)} dataKey="value" innerRadius={56} outerRadius={84} paddingAngle={2}>
+                    <Pie
+                      data={dist.filter((d) => d.value > 0)}
+                      dataKey="value"
+                      innerRadius={56}
+                      outerRadius={84}
+                      paddingAngle={2}
+                      onClick={(d: { name?: string; sent?: "positive" | "neutral" | "negative" }) => d?.sent && d?.name && openSent(d.name, d.sent)}
+                      style={{ cursor: "pointer" }}
+                    >
                       {dist.map((d, i) => <Cell key={i} fill={d.color} stroke="oklch(0.18 0.03 252)" />)}
                     </Pie>
                     <Tooltip contentStyle={{ background: "oklch(0.18 0.03 252)", border: "1px solid oklch(1 0 0 / 0.1)", borderRadius: 8, fontSize: 12 }} />
@@ -115,7 +127,7 @@ function SentimentPage() {
                 const n = Math.round((items.filter((a) => a.sentiment === "negative").length / Math.max(1, items.length)) * 100);
                 const u = 100 - p - n;
                 return (
-                  <li key={src.name} className="rounded-lg border border-border bg-panel-elevated p-3">
+                  <li key={src.name} onClick={() => dialog.open({ title: `Sumber: ${src.name}`, articles: items })} className="cursor-pointer rounded-lg border border-border bg-panel-elevated p-3 hover:border-primary/40">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-semibold text-foreground">{src.name}</span>
                       <Pill tone="info">{src.count} artikel</Pill>
