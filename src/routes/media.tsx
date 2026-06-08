@@ -3,6 +3,7 @@ import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
 import { Globe, Activity, ShieldCheck, Users } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { AINarrative } from "@/components/AINarrative";
+import { CategoryDistribution } from "@/components/CategoryDistribution";
 
 export const Route = createFileRoute("/media")({
   head: () => ({
@@ -98,31 +99,8 @@ function MediaPage() {
         )}
       </Panel>
 
-      <Panel className="mt-6" title="Distribusi Kategori">
-        {s.categories.length === 0 ? (
-          <p className="py-6 text-center text-xs text-muted-foreground">Belum ada kategori artikel.</p>
-        ) : (
-          <ul className="divide-y divide-border">
-            {s.categories.slice(0, 8).map((c) => {
-              const items = filtered.filter((a) => a.category === c.name);
-              const p = Math.round((items.filter((a) => a.sentiment === "positive").length / Math.max(1, items.length)) * 100);
-              const n = Math.round((items.filter((a) => a.sentiment === "negative").length / Math.max(1, items.length)) * 100);
-              const u = 100 - p - n;
-              return (
-                <li key={c.name} className="grid grid-cols-1 gap-3 py-4 sm:grid-cols-[1fr_auto_auto_auto]">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{c.name}</p>
-                    <p className="font-mono text-[11px] text-muted-foreground">{c.count} artikel</p>
-                  </div>
-                  <span className="font-mono text-xs text-success">+{p}% Pos</span>
-                  <span className="font-mono text-xs text-muted-foreground">{u}% Neu</span>
-                  <span className="font-mono text-xs text-destructive">-{n}% Neg</span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </Panel>
+      <CategoryDistribution className="mt-6" articles={filtered} />
+
 
       <AINarrative
         className="mt-6"

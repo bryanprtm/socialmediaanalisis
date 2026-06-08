@@ -4,6 +4,7 @@ import { ResponsiveContainer, BarChart, Bar as RBar, XAxis, YAxis, CartesianGrid
 import { TrendingUp, Hash, Flame, Activity, Sparkles } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { AINarrative } from "@/components/AINarrative";
+import { CategoryDistribution } from "@/components/CategoryDistribution";
 
 export const Route = createFileRoute("/trends")({
   head: () => ({
@@ -99,23 +100,8 @@ function TrendsPage() {
         </Panel>
       </div>
 
-      <Panel className="mt-6" title="Distribusi Kategori" icon={<Hash className="h-4 w-4" />}>
-        {topCats.length === 0 ? (
-          <p className="py-6 text-center text-xs text-muted-foreground">Belum ada kategori.</p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {topCats.map((c) => (
-              <div key={c.name} className="rounded-lg border border-border bg-panel-elevated p-4">
-                <p className="text-sm font-semibold text-foreground">{c.name}</p>
-                <p className="mt-1 font-mono text-[11px] text-muted-foreground">{c.count} artikel</p>
-                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full bg-gradient-cyan" style={{ width: `${Math.round((c.count / (topCats[0]?.count || 1)) * 100)}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Panel>
+      <CategoryDistribution className="mt-6" articles={filtered} />
+
 
       <AINarrative
         className="mt-6"
