@@ -310,7 +310,7 @@ export function KeywordIntelligence({
                 <tr
                   key={r.name}
                   className={`cursor-pointer hover:bg-panel-elevated/60 ${focusKw === r.name ? "bg-panel-elevated/40" : ""}`}
-                  onClick={() => setFocus(r.name)}
+                  onClick={() => { setFocus(r.name); openKw(r.name); }}
                 >
                   <td className="py-2 pr-3 font-mono text-xs text-primary">{i + 1}</td>
                   <td className="py-2 pr-3 font-semibold text-foreground">{r.name}</td>
