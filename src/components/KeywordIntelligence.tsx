@@ -358,7 +358,7 @@ export function KeywordIntelligence({
               return (
                 <button
                   key={r.name}
-                  onClick={() => setFocus(r.name)}
+                  onClick={() => { setFocus(r.name); openKw(r.name); }}
                   className="font-display font-bold leading-tight transition hover:opacity-100"
                   style={{
                     fontSize: `${size}px`,
