@@ -130,7 +130,10 @@ export function CategoryDistribution({
                   borderRadius: 8,
                   fontSize: 12,
                 }}
-                formatter={(v: number, n: string) => [`${v} artikel (${((v / total) * 100).toFixed(1)}%)`, n]}
+                formatter={(v, n) => {
+                  const num = typeof v === "number" ? v : Number(v) || 0;
+                  return [`${num} artikel (${((num / total) * 100).toFixed(1)}%)`, String(n)];
+                }}
               />
               <Legend
                 wrapperStyle={{ fontSize: 10, color: "oklch(0.7 0.025 240)" }}
