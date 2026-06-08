@@ -435,7 +435,8 @@ export function KeywordIntelligence({
               {data.perRegion.map((s) => (
                 <li
                   key={s.region}
-                  className="flex items-center justify-between rounded-md border border-border bg-panel-elevated px-3 py-2 text-sm"
+                  onClick={() => openRegion(s.region)}
+                  className="flex cursor-pointer items-center justify-between rounded-md border border-border bg-panel-elevated px-3 py-2 text-sm hover:border-primary/40"
                 >
                   <span className="truncate font-mono text-[11px] text-muted-foreground">{s.region}</span>
                   <span className="ml-3 truncate font-semibold text-foreground">{s.kw}</span>
