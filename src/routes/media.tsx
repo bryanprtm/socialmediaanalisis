@@ -123,6 +123,18 @@ function MediaPage() {
           </ul>
         )}
       </Panel>
+
+      <AINarrative
+        className="mt-6"
+        page="Analisis Media"
+        context={{
+          total_artikel: s.total,
+          sumber_unik: s.sources.length,
+          per_sumber: perSource.slice(0, 10),
+          per_kategori: s.categories.slice(0, 8).map((c) => `${c.name}(${c.count})`),
+          filter_aktif: active?.name ?? null,
+        }}
+      />
     </PageShell>
   );
 }
