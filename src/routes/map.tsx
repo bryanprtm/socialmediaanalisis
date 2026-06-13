@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PageShell, Panel, MetricCard, Pill, Bar } from "@/components/PageShell";
 import { Map as MapIcon, MapPin, TrendingUp, Activity, X, ExternalLink } from "lucide-react";
-import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { useFilteredArticles } from "@/hooks/use-filtered-articles";
 import { IndonesiaMap, articleMatchesProvince } from "@/components/IndonesiaMap";
+import { resolveArticleProvince } from "@/lib/province-detect";
 
 export const Route = createFileRoute("/map")({
   head: () => ({
@@ -17,12 +18,38 @@ export const Route = createFileRoute("/map")({
 
 function Page() {
   const { filtered, loading, active } = useFilteredArticles();
-  const s = summarize(filtered);
   const [selected, setSelected] = useState<string | null>(null);
 
+  // Enrich articles with detected province (from region OR scanned text fields).
+  const enrichedArticles = useMemo(
+    () => filtered.map((a) => ({ ...a, region: resolveArticleProvince(a) ?? a.region })),
+    [filtered],
+  );
+
+  // Province ranking based on enriched region.
+  const regionRanking = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const a of enrichedArticles) {
+      if (!a.region) continue;
+      m.set(a.region, (m.get(a.region) ?? 0) + 1);
+    }
+    return [...m.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [enrichedArticles]);
+
+  const totalDetected = regionRanking.reduce((sum, r) => sum + r.count, 0);
+  const totalPositive = enrichedArticles.filter((a) => a.sentiment === "positive").length;
+  const pctPosOverall = enrichedArticles.length
+    ? Math.round((totalPositive / enrichedArticles.length) * 100)
+    : 0;
+
   const provinceArticles = useMemo(
-    () => (selected ? filtered.filter((a) => articleMatchesProvince(a.region, selected)) : []),
-    [selected, filtered],
+    () =>
+      selected
+        ? enrichedArticles.filter((a) => articleMatchesProvince(a.region, selected))
+        : [],
+    [selected, enrichedArticles],
   );
 
   const provStats = useMemo(() => {
@@ -51,10 +78,10 @@ function Page() {
       description="Distribusi berita per provinsi — klik wilayah pada peta untuk melihat analisa berita."
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Provinsi Terpantau" value={String(s.regions.length)} icon={<MapPin className="h-5 w-5" />} accent="cyan" hint={active ? "Filtered" : "All"} />
-        <MetricCard label="Total Artikel" value={String(s.total)} icon={<Activity className="h-5 w-5" />} accent="success" />
-        <MetricCard label="Hotspot" value={s.regions[0]?.name ?? "—"} icon={<TrendingUp className="h-5 w-5" />} accent="amber" hint={`${s.regions[0]?.count ?? 0} mentions`} />
-        <MetricCard label="Sentiment Positif" value={`${s.pctPos}%`} icon={<Activity className="h-5 w-5" />} accent="violet" />
+        <MetricCard label="Provinsi Terpantau" value={String(regionRanking.length)} icon={<MapPin className="h-5 w-5" />} accent="cyan" hint={active ? "Filtered" : "All"} />
+        <MetricCard label="Total Artikel Terpetakan" value={String(totalDetected)} icon={<Activity className="h-5 w-5" />} accent="success" hint={`dari ${enrichedArticles.length} total`} />
+        <MetricCard label="Hotspot" value={regionRanking[0]?.name ?? "—"} icon={<TrendingUp className="h-5 w-5" />} accent="amber" hint={`${regionRanking[0]?.count ?? 0} mentions`} />
+        <MetricCard label="Sentiment Positif" value={`${pctPosOverall}%`} icon={<Activity className="h-5 w-5" />} accent="violet" />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
@@ -62,7 +89,7 @@ function Page() {
           {loading ? (
             <p className="py-10 text-center text-sm text-muted-foreground">Memuat…</p>
           ) : (
-            <IndonesiaMap articles={filtered} selected={selected} onSelect={setSelected} />
+            <IndonesiaMap articles={enrichedArticles} selected={selected} onSelect={setSelected} />
           )}
         </Panel>
 
@@ -146,14 +173,14 @@ function Page() {
       </div>
 
       <Panel className="mt-6" title="Ranking Provinsi" icon={<MapIcon className="h-4 w-4" />}>
-        {s.regions.length === 0 ? (
+        {regionRanking.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            Belum ada artikel dengan label region. Tambahkan kolom region pada berita di News Database.
+            Belum ada artikel yang dapat dipetakan ke provinsi.
           </p>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {s.regions.map((r, i) => {
-              const maxC = s.regions[0]?.count ?? 1;
+            {regionRanking.map((r, i) => {
+              const maxC = regionRanking[0]?.count ?? 1;
               return (
                 <li key={r.name}>
                   <button
