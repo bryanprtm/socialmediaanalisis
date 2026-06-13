@@ -173,14 +173,14 @@ function Page() {
       </div>
 
       <Panel className="mt-6" title="Ranking Provinsi" icon={<MapIcon className="h-4 w-4" />}>
-        {s.regions.length === 0 ? (
+        {regionRanking.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            Belum ada artikel dengan label region. Tambahkan kolom region pada berita di News Database.
+            Belum ada artikel yang dapat dipetakan ke provinsi.
           </p>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {s.regions.map((r, i) => {
-              const maxC = s.regions[0]?.count ?? 1;
+            {regionRanking.map((r, i) => {
+              const maxC = regionRanking[0]?.count ?? 1;
               return (
                 <li key={r.name}>
                   <button
