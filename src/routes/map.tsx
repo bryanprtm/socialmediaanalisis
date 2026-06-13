@@ -78,10 +78,10 @@ function Page() {
       description="Distribusi berita per provinsi — klik wilayah pada peta untuk melihat analisa berita."
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Provinsi Terpantau" value={String(s.regions.length)} icon={<MapPin className="h-5 w-5" />} accent="cyan" hint={active ? "Filtered" : "All"} />
-        <MetricCard label="Total Artikel" value={String(s.total)} icon={<Activity className="h-5 w-5" />} accent="success" />
-        <MetricCard label="Hotspot" value={s.regions[0]?.name ?? "—"} icon={<TrendingUp className="h-5 w-5" />} accent="amber" hint={`${s.regions[0]?.count ?? 0} mentions`} />
-        <MetricCard label="Sentiment Positif" value={`${s.pctPos}%`} icon={<Activity className="h-5 w-5" />} accent="violet" />
+        <MetricCard label="Provinsi Terpantau" value={String(regionRanking.length)} icon={<MapPin className="h-5 w-5" />} accent="cyan" hint={active ? "Filtered" : "All"} />
+        <MetricCard label="Total Artikel Terpetakan" value={String(totalDetected)} icon={<Activity className="h-5 w-5" />} accent="success" hint={`dari ${enrichedArticles.length} total`} />
+        <MetricCard label="Hotspot" value={regionRanking[0]?.name ?? "—"} icon={<TrendingUp className="h-5 w-5" />} accent="amber" hint={`${regionRanking[0]?.count ?? 0} mentions`} />
+        <MetricCard label="Sentiment Positif" value={`${pctPosOverall}%`} icon={<Activity className="h-5 w-5" />} accent="violet" />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
@@ -89,7 +89,7 @@ function Page() {
           {loading ? (
             <p className="py-10 text-center text-sm text-muted-foreground">Memuat…</p>
           ) : (
-            <IndonesiaMap articles={filtered} selected={selected} onSelect={setSelected} />
+            <IndonesiaMap articles={enrichedArticles} selected={selected} onSelect={setSelected} />
           )}
         </Panel>
 
