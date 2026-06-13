@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { PageShell, Panel, MetricCard, Pill, Bar } from "@/components/PageShell";
 import { Map as MapIcon, MapPin, TrendingUp, Activity, X, ExternalLink } from "lucide-react";
-import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { useFilteredArticles } from "@/hooks/use-filtered-articles";
 import { IndonesiaMap, articleMatchesProvince } from "@/components/IndonesiaMap";
+import { resolveArticleProvince } from "@/lib/province-detect";
 
 export const Route = createFileRoute("/map")({
   head: () => ({
@@ -17,12 +18,38 @@ export const Route = createFileRoute("/map")({
 
 function Page() {
   const { filtered, loading, active } = useFilteredArticles();
-  const s = summarize(filtered);
   const [selected, setSelected] = useState<string | null>(null);
 
+  // Enrich articles with detected province (from region OR scanned text fields).
+  const enrichedArticles = useMemo(
+    () => filtered.map((a) => ({ ...a, region: resolveArticleProvince(a) ?? a.region })),
+    [filtered],
+  );
+
+  // Province ranking based on enriched region.
+  const regionRanking = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const a of enrichedArticles) {
+      if (!a.region) continue;
+      m.set(a.region, (m.get(a.region) ?? 0) + 1);
+    }
+    return [...m.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [enrichedArticles]);
+
+  const totalDetected = regionRanking.reduce((sum, r) => sum + r.count, 0);
+  const totalPositive = enrichedArticles.filter((a) => a.sentiment === "positive").length;
+  const pctPosOverall = enrichedArticles.length
+    ? Math.round((totalPositive / enrichedArticles.length) * 100)
+    : 0;
+
   const provinceArticles = useMemo(
-    () => (selected ? filtered.filter((a) => articleMatchesProvince(a.region, selected)) : []),
-    [selected, filtered],
+    () =>
+      selected
+        ? enrichedArticles.filter((a) => articleMatchesProvince(a.region, selected))
+        : [],
+    [selected, enrichedArticles],
   );
 
   const provStats = useMemo(() => {
