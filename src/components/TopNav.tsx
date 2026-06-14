@@ -28,7 +28,6 @@ import {
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveKeyword } from "@/hooks/use-active-keyword";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logo from "@/assets/propam-logo.png";
 
@@ -86,7 +85,7 @@ const navItems: NavGroup[] = [
 export function TopNav() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const { queries, active, setActiveId } = useActiveKeyword();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [kwOpen, setKwOpen] = useState(false);
@@ -112,7 +111,7 @@ export function TopNav() {
   }, []);
 
   async function handleLogout() {
-    await supabase.auth.signOut();
+    await logout();
     toast.success("Logout berhasil");
     navigate({ to: "/" });
   }

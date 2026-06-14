@@ -1,5 +1,5 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts, useLocation, Navigate } from "@tanstack/react-router";
-import { useAuth } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ActiveKeywordProvider } from "@/hooks/use-active-keyword";
 import { ArticleDialogProvider } from "@/components/ArticleDialog";
 
@@ -86,6 +86,14 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  return (
+    <AuthProvider>
+      <RootGate />
+    </AuthProvider>
+  );
+}
+
+function RootGate() {
   const { pathname } = useLocation();
   const { isAuthenticated, loading } = useAuth();
   const isPublic = PUBLIC_ROUTES.includes(pathname);
