@@ -11,7 +11,17 @@ APP_DIR="${APP_DIR:-/var/www/${APP_NAME}}"
 APP_USER="${APP_USER:-www-data}"
 APP_PORT="${APP_PORT:-3000}"
 NODE_MAJOR="${NODE_MAJOR:-20}"
-DOMAIN="${DOMAIN:-}"   # opsional, contoh: export DOMAIN=example.com
+DOMAIN="${DOMAIN:-}"          # opsional, contoh: export DOMAIN=example.com
+
+# Database mode:
+#   postgres  -> install PostgreSQL 16 native (default, ringan, cocok VPS)
+#   supabase  -> install Supabase self-hosted via Docker (butuh >=4GB RAM)
+#   none      -> tidak install DB lokal (pakai Lovable Cloud / Supabase remote)
+DB_MODE="${DB_MODE:-postgres}"
+PG_VERSION="${PG_VERSION:-16}"
+PG_DB="${PG_DB:-${APP_NAME//-/_}}"
+PG_USER="${PG_USER:-${APP_NAME//-/_}_user}"
+PG_PASSWORD="${PG_PASSWORD:-$(openssl rand -hex 16 2>/dev/null || echo "ChangeMe$(date +%s)")}"
 
 log()  { echo -e "\e[1;32m[+] $*\e[0m"; }
 warn() { echo -e "\e[1;33m[!] $*\e[0m"; }
