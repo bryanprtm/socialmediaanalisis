@@ -22,6 +22,7 @@ PG_VERSION="${PG_VERSION:-16}"
 PG_DB="${PG_DB:-${APP_NAME//-/_}}"
 PG_USER="${PG_USER:-${APP_NAME//-/_}_user}"
 PG_PASSWORD="${PG_PASSWORD:-$(openssl rand -hex 16 2>/dev/null || echo "ChangeMe$(date +%s)")}"
+JWT_SECRET_VALUE="${JWT_SECRET:-$(openssl rand -hex 32 2>/dev/null || echo "change_me_$(date +%s%N)")}"
 
 log()  { echo -e "\e[1;32m[+] $*\e[0m"; }
 warn() { echo -e "\e[1;33m[!] $*\e[0m"; }
@@ -161,7 +162,11 @@ NODE_ENV=production
 # === Database lokal (DB_MODE=${DB_MODE}) ===
 DATABASE_URL=${DATABASE_URL}
 
-# === Supabase remote (kosongkan jika full self-hosted / hanya pakai DATABASE_URL) ===
+# === Auth lokal (JWT + bcrypt) ===
+JWT_SECRET=${JWT_SECRET_VALUE}
+JWT_EXPIRES_IN=7d
+
+# === Supabase remote (kosongkan setelah Fase 3 migrasi selesai) ===
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
 VITE_SUPABASE_PROJECT_ID=
@@ -178,6 +183,12 @@ fi
 # ---------------------------------------------------------------------
 log "Install dependencies (bun install)..."
 sudo -u "$APP_USER" -H bash -lc "cd '$APP_DIR' && bun install --frozen-lockfile || bun install"
+
+if [[ "$DB_MODE" == "postgres" || "$DB_MODE" == "supabase" ]]; then
+  log "Generate & apply migrasi Drizzle..."
+  sudo -u "$APP_USER" -H bash -lc "cd '$APP_DIR' && bun run db:generate || true"
+  sudo -u "$APP_USER" -H bash -lc "cd '$APP_DIR' && bun run db:migrate || warn 'drizzle migrate gagal — jalankan manual: bun run db:migrate'"
+fi
 
 log "Build production..."
 sudo -u "$APP_USER" -H bash -lc "cd '$APP_DIR' && bun run build"
@@ -283,6 +294,14 @@ elif [[ "$DB_MODE" == "supabase" ]]; then
   echo " Supabase : http://<IP>:8000  (Studio)"
   echo " Stack    : /opt/supabase/project (docker compose)"
 fi
+echo " JWT Sec  : ${JWT_SECRET_VALUE}"
+warn "Simpan JWT_SECRET di tempat aman."
+echo ""
+echo " >> Migrasi data dari Supabase Cloud (opsional, sekali jalan):"
+echo "    1. Isi SUPABASE_URL & SUPABASE_SERVICE_ROLE_KEY di ${APP_DIR}/.env"
+echo "    2. sudo -u ${APP_USER} bash -lc 'cd ${APP_DIR} && bun run db:seed-from-supabase'"
+echo "    Lihat ${APP_DIR}/deploy/MIGRATION.md untuk detail."
+echo ""
 echo " Cek      : pm2 status | systemctl status nginx"
 echo " Logs     : pm2 logs ${APP_NAME}"
 echo "----------------------------------------------------------------"
