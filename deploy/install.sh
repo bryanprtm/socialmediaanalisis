@@ -154,12 +154,20 @@ chown -R "$APP_USER":"$APP_USER" "$APP_DIR"
 if [[ ! -f "$APP_DIR/.env" ]]; then
   warn ".env belum ada. Membuat template..."
   cat > "$APP_DIR/.env" <<EOF
-# Isi nilai sesuai project Lovable Cloud / Supabase Anda
+# === App ===
+PORT=${APP_PORT}
+NODE_ENV=production
+
+# === Database lokal (DB_MODE=${DB_MODE}) ===
+DATABASE_URL=${DATABASE_URL}
+
+# === Supabase remote (kosongkan jika full self-hosted / hanya pakai DATABASE_URL) ===
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
 VITE_SUPABASE_PROJECT_ID=
-PORT=${APP_PORT}
-NODE_ENV=production
+SUPABASE_URL=
+SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 EOF
   chown "$APP_USER":"$APP_USER" "$APP_DIR/.env"
   warn "Edit ${APP_DIR}/.env sebelum start aplikasi."
