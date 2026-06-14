@@ -11,7 +11,17 @@ APP_DIR="${APP_DIR:-/var/www/${APP_NAME}}"
 APP_USER="${APP_USER:-www-data}"
 APP_PORT="${APP_PORT:-3000}"
 NODE_MAJOR="${NODE_MAJOR:-20}"
-DOMAIN="${DOMAIN:-}"   # opsional, contoh: export DOMAIN=example.com
+DOMAIN="${DOMAIN:-}"          # opsional, contoh: export DOMAIN=example.com
+
+# Database mode:
+#   postgres  -> install PostgreSQL 16 native (default, ringan, cocok VPS)
+#   supabase  -> install Supabase self-hosted via Docker (butuh >=4GB RAM)
+#   none      -> tidak install DB lokal (pakai Lovable Cloud / Supabase remote)
+DB_MODE="${DB_MODE:-postgres}"
+PG_VERSION="${PG_VERSION:-16}"
+PG_DB="${PG_DB:-${APP_NAME//-/_}}"
+PG_USER="${PG_USER:-${APP_NAME//-/_}_user}"
+PG_PASSWORD="${PG_PASSWORD:-$(openssl rand -hex 16 2>/dev/null || echo "ChangeMe$(date +%s)")}"
 
 log()  { echo -e "\e[1;32m[+] $*\e[0m"; }
 warn() { echo -e "\e[1;33m[!] $*\e[0m"; }
@@ -30,9 +40,62 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get upgrade -y
 apt-get install -y \
-  curl wget git ca-certificates gnupg lsb-release \
-  build-essential python3 unzip ufw nginx \
+  curl wget git ca-certificates gnupg lsb-release openssl \
+  build-essential python3 unzip ufw nginx rsync \
   software-properties-common apt-transport-https
+
+# ---------------------------------------------------------------------
+# 1b. Database (PostgreSQL native / Supabase self-hosted / none)
+# ---------------------------------------------------------------------
+case "$DB_MODE" in
+  postgres)
+    log "Install PostgreSQL ${PG_VERSION} (native)..."
+    install -d /usr/share/postgresql-common/pgdg
+    curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+      -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+    echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+      > /etc/apt/sources.list.d/pgdg.list
+    apt-get update -y
+    apt-get install -y "postgresql-${PG_VERSION}" "postgresql-contrib-${PG_VERSION}"
+    systemctl enable --now postgresql
+
+    log "Buat database & user aplikasi..."
+    sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='${PG_USER}'" | grep -q 1 || \
+      sudo -u postgres psql -c "CREATE USER ${PG_USER} WITH ENCRYPTED PASSWORD '${PG_PASSWORD}';"
+    sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='${PG_DB}'" | grep -q 1 || \
+      sudo -u postgres createdb -O "${PG_USER}" "${PG_DB}"
+    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${PG_DB} TO ${PG_USER};"
+    sudo -u postgres psql -d "${PG_DB}" -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+    DATABASE_URL="postgresql://${PG_USER}:${PG_PASSWORD}@127.0.0.1:5432/${PG_DB}"
+    log "DATABASE_URL siap (disimpan ke .env)."
+    ;;
+  supabase)
+    log "Install Docker + Supabase self-hosted stack..."
+    if ! command -v docker >/dev/null 2>&1; then
+      curl -fsSL https://get.docker.com | sh
+      systemctl enable --now docker
+    fi
+    SUPA_DIR="/opt/supabase"
+    if [[ ! -d "$SUPA_DIR" ]]; then
+      git clone --depth 1 https://github.com/supabase/supabase "$SUPA_DIR"
+    fi
+    mkdir -p "$SUPA_DIR/project"
+    cp -n "$SUPA_DIR/docker/.env.example" "$SUPA_DIR/project/.env" || true
+    cp -rn "$SUPA_DIR/docker/." "$SUPA_DIR/project/" || true
+    ( cd "$SUPA_DIR/project" && docker compose pull && docker compose up -d )
+    warn "Supabase stack jalan di port 8000 (Studio) & 5432 (Postgres)."
+    warn "Edit ${SUPA_DIR}/project/.env untuk ganti password/JWT secret, lalu 'docker compose up -d' ulang."
+    DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/postgres"
+    ;;
+  none)
+    warn "DB_MODE=none — tidak install database lokal. App akan pakai Supabase remote dari .env."
+    DATABASE_URL=""
+    ;;
+  *)
+    err "DB_MODE tidak dikenal: ${DB_MODE} (gunakan postgres | supabase | none)"
+    exit 1
+    ;;
+esac
 
 # ---------------------------------------------------------------------
 # 2. Node.js (NodeSource) + npm
@@ -91,12 +154,20 @@ chown -R "$APP_USER":"$APP_USER" "$APP_DIR"
 if [[ ! -f "$APP_DIR/.env" ]]; then
   warn ".env belum ada. Membuat template..."
   cat > "$APP_DIR/.env" <<EOF
-# Isi nilai sesuai project Lovable Cloud / Supabase Anda
+# === App ===
+PORT=${APP_PORT}
+NODE_ENV=production
+
+# === Database lokal (DB_MODE=${DB_MODE}) ===
+DATABASE_URL=${DATABASE_URL}
+
+# === Supabase remote (kosongkan jika full self-hosted / hanya pakai DATABASE_URL) ===
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
 VITE_SUPABASE_PROJECT_ID=
-PORT=${APP_PORT}
-NODE_ENV=production
+SUPABASE_URL=
+SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 EOF
   chown "$APP_USER":"$APP_USER" "$APP_DIR/.env"
   warn "Edit ${APP_DIR}/.env sebelum start aplikasi."
@@ -201,6 +272,17 @@ echo " Aplikasi : ${APP_NAME}"
 echo " Direktori: ${APP_DIR}"
 echo " Port     : ${APP_PORT}"
 echo " Domain   : ${DOMAIN:-(belum di-set, akses via IP)}"
+echo " DB Mode  : ${DB_MODE}"
+if [[ "$DB_MODE" == "postgres" ]]; then
+  echo " DB Name  : ${PG_DB}"
+  echo " DB User  : ${PG_USER}"
+  echo " DB Pass  : ${PG_PASSWORD}"
+  echo " DB URL   : ${DATABASE_URL}"
+  warn "Simpan password DB di tempat aman & hapus dari log!"
+elif [[ "$DB_MODE" == "supabase" ]]; then
+  echo " Supabase : http://<IP>:8000  (Studio)"
+  echo " Stack    : /opt/supabase/project (docker compose)"
+fi
 echo " Cek      : pm2 status | systemctl status nginx"
 echo " Logs     : pm2 logs ${APP_NAME}"
 echo "----------------------------------------------------------------"

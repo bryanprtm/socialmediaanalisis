@@ -1,7 +1,23 @@
 # Deploy ke Ubuntu Server (VPS Standalone)
 
 Script otomatis untuk install & menjalankan aplikasi ini di VPS Ubuntu
-20.04 / 22.04 / 24.04 menggunakan **Node.js + Bun + PM2 + Nginx**.
+20.04 / 22.04 / 24.04 menggunakan **Node.js + Bun + PM2 + Nginx**, dengan
+opsi database lokal.
+
+## Pilihan Database (VPS standalone)
+
+Aplikasi ini dibangun di atas **PostgreSQL** (Supabase = Postgres + Auth +
+RLS). Jadi database yang paling cocok untuk VPS adalah:
+
+| `DB_MODE`   | Engine                       | RAM minimum | Kapan dipilih                                                      |
+|-------------|------------------------------|-------------|--------------------------------------------------------------------|
+| `postgres`  | PostgreSQL 16 native (default) | 1 GB       | Paling ringan & stabil. Cocok 90% kebutuhan.                       |
+| `supabase`  | Supabase self-hosted (Docker)  | 4 GB       | Butuh Auth + Realtime + Storage + Studio UI seperti Lovable Cloud. |
+| `none`      | —                              | —          | Tetap pakai Lovable Cloud / Supabase remote (default lama).        |
+
+> **Catatan:** Node.js bukan database — Node hanya runtime. MongoDB / MySQL
+> tidak disarankan karena kode (RLS, `auth.users`, migrasi SQL, fungsi
+> `has_role`) sudah Postgres-specific.
 
 ## Yang akan diinstall
 
@@ -12,6 +28,7 @@ Script otomatis untuk install & menjalankan aplikasi ini di VPS Ubuntu
 - UFW firewall (allow SSH + HTTP/HTTPS)
 - Certbot (SSL Let's Encrypt, opsional bila `DOMAIN` di-set)
 - Build tools (`build-essential`, `python3`, `git`, dll)
+- **Database** sesuai `DB_MODE` (PostgreSQL native / Supabase Docker / none)
 
 ## Cara pakai
 
@@ -26,23 +43,34 @@ cd /var/www/socialmedia-analisis
 ### 2. Jalankan installer
 
 ```bash
-# Tanpa domain (akses via IP)
+# Default: PostgreSQL 16 native, akses via IP
 sudo bash deploy/install.sh
 
 # Dengan domain + SSL otomatis (pastikan DNS sudah pointing ke IP VPS)
 sudo DOMAIN=example.com bash deploy/install.sh
+
+# Mode Supabase self-hosted (butuh >=4GB RAM, install Docker)
+sudo DB_MODE=supabase bash deploy/install.sh
+
+# Tanpa DB lokal (pakai Lovable Cloud / Supabase remote)
+sudo DB_MODE=none bash deploy/install.sh
 ```
 
 Variabel yang bisa di-override:
 
-| Variable    | Default                              | Keterangan                  |
-|-------------|--------------------------------------|-----------------------------|
-| `APP_NAME`  | `socialmedia-analisis`               | Nama PM2 & nginx site       |
-| `APP_DIR`   | `/var/www/${APP_NAME}`               | Direktori aplikasi          |
-| `APP_USER`  | `www-data`                           | User pemilik proses         |
-| `APP_PORT`  | `3000`                               | Port internal Node          |
-| `NODE_MAJOR`| `20`                                 | Versi Node.js mayor         |
-| `DOMAIN`    | *(kosong)*                           | Domain untuk Nginx + SSL    |
+| Variable      | Default                  | Keterangan                                       |
+|---------------|--------------------------|--------------------------------------------------|
+| `APP_NAME`    | `socialmedia-analisis`   | Nama PM2 & nginx site                            |
+| `APP_DIR`     | `/var/www/${APP_NAME}`   | Direktori aplikasi                               |
+| `APP_USER`    | `www-data`               | User pemilik proses                              |
+| `APP_PORT`    | `3000`                   | Port internal Node                               |
+| `NODE_MAJOR`  | `20`                     | Versi Node.js mayor                              |
+| `DOMAIN`      | *(kosong)*               | Domain untuk Nginx + SSL                         |
+| `DB_MODE`     | `postgres`               | `postgres` \| `supabase` \| `none`               |
+| `PG_VERSION`  | `16`                     | Versi PostgreSQL (mode `postgres`)               |
+| `PG_DB`       | `<app_name>`             | Nama database yang dibuat                        |
+| `PG_USER`     | `<app_name>_user`        | User database                                    |
+| `PG_PASSWORD` | *(random 32 hex)*        | Password DB — dicetak di akhir install           |
 
 ### 3. Isi `.env`
 
