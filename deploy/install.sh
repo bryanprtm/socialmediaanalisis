@@ -162,7 +162,11 @@ NODE_ENV=production
 # === Database lokal (DB_MODE=${DB_MODE}) ===
 DATABASE_URL=${DATABASE_URL}
 
-# === Supabase remote (kosongkan jika full self-hosted / hanya pakai DATABASE_URL) ===
+# === Auth lokal (JWT + bcrypt) ===
+JWT_SECRET=${JWT_SECRET_VALUE}
+JWT_EXPIRES_IN=7d
+
+# === Supabase remote (kosongkan setelah Fase 3 migrasi selesai) ===
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
 VITE_SUPABASE_PROJECT_ID=
