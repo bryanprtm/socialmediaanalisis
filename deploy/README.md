@@ -43,23 +43,34 @@ cd /var/www/socialmedia-analisis
 ### 2. Jalankan installer
 
 ```bash
-# Tanpa domain (akses via IP)
+# Default: PostgreSQL 16 native, akses via IP
 sudo bash deploy/install.sh
 
 # Dengan domain + SSL otomatis (pastikan DNS sudah pointing ke IP VPS)
 sudo DOMAIN=example.com bash deploy/install.sh
+
+# Mode Supabase self-hosted (butuh >=4GB RAM, install Docker)
+sudo DB_MODE=supabase bash deploy/install.sh
+
+# Tanpa DB lokal (pakai Lovable Cloud / Supabase remote)
+sudo DB_MODE=none bash deploy/install.sh
 ```
 
 Variabel yang bisa di-override:
 
-| Variable    | Default                              | Keterangan                  |
-|-------------|--------------------------------------|-----------------------------|
-| `APP_NAME`  | `socialmedia-analisis`               | Nama PM2 & nginx site       |
-| `APP_DIR`   | `/var/www/${APP_NAME}`               | Direktori aplikasi          |
-| `APP_USER`  | `www-data`                           | User pemilik proses         |
-| `APP_PORT`  | `3000`                               | Port internal Node          |
-| `NODE_MAJOR`| `20`                                 | Versi Node.js mayor         |
-| `DOMAIN`    | *(kosong)*                           | Domain untuk Nginx + SSL    |
+| Variable      | Default                  | Keterangan                                       |
+|---------------|--------------------------|--------------------------------------------------|
+| `APP_NAME`    | `socialmedia-analisis`   | Nama PM2 & nginx site                            |
+| `APP_DIR`     | `/var/www/${APP_NAME}`   | Direktori aplikasi                               |
+| `APP_USER`    | `www-data`               | User pemilik proses                              |
+| `APP_PORT`    | `3000`                   | Port internal Node                               |
+| `NODE_MAJOR`  | `20`                     | Versi Node.js mayor                              |
+| `DOMAIN`      | *(kosong)*               | Domain untuk Nginx + SSL                         |
+| `DB_MODE`     | `postgres`               | `postgres` \| `supabase` \| `none`               |
+| `PG_VERSION`  | `16`                     | Versi PostgreSQL (mode `postgres`)               |
+| `PG_DB`       | `<app_name>`             | Nama database yang dibuat                        |
+| `PG_USER`     | `<app_name>_user`        | User database                                    |
+| `PG_PASSWORD` | *(random 32 hex)*        | Password DB — dicetak di akhir install           |
 
 ### 3. Isi `.env`
 
