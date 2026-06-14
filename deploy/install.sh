@@ -40,9 +40,62 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get upgrade -y
 apt-get install -y \
-  curl wget git ca-certificates gnupg lsb-release \
-  build-essential python3 unzip ufw nginx \
+  curl wget git ca-certificates gnupg lsb-release openssl \
+  build-essential python3 unzip ufw nginx rsync \
   software-properties-common apt-transport-https
+
+# ---------------------------------------------------------------------
+# 1b. Database (PostgreSQL native / Supabase self-hosted / none)
+# ---------------------------------------------------------------------
+case "$DB_MODE" in
+  postgres)
+    log "Install PostgreSQL ${PG_VERSION} (native)..."
+    install -d /usr/share/postgresql-common/pgdg
+    curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+      -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
+    echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+      > /etc/apt/sources.list.d/pgdg.list
+    apt-get update -y
+    apt-get install -y "postgresql-${PG_VERSION}" "postgresql-contrib-${PG_VERSION}"
+    systemctl enable --now postgresql
+
+    log "Buat database & user aplikasi..."
+    sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='${PG_USER}'" | grep -q 1 || \
+      sudo -u postgres psql -c "CREATE USER ${PG_USER} WITH ENCRYPTED PASSWORD '${PG_PASSWORD}';"
+    sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='${PG_DB}'" | grep -q 1 || \
+      sudo -u postgres createdb -O "${PG_USER}" "${PG_DB}"
+    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${PG_DB} TO ${PG_USER};"
+    sudo -u postgres psql -d "${PG_DB}" -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+    DATABASE_URL="postgresql://${PG_USER}:${PG_PASSWORD}@127.0.0.1:5432/${PG_DB}"
+    log "DATABASE_URL siap (disimpan ke .env)."
+    ;;
+  supabase)
+    log "Install Docker + Supabase self-hosted stack..."
+    if ! command -v docker >/dev/null 2>&1; then
+      curl -fsSL https://get.docker.com | sh
+      systemctl enable --now docker
+    fi
+    SUPA_DIR="/opt/supabase"
+    if [[ ! -d "$SUPA_DIR" ]]; then
+      git clone --depth 1 https://github.com/supabase/supabase "$SUPA_DIR"
+    fi
+    mkdir -p "$SUPA_DIR/project"
+    cp -n "$SUPA_DIR/docker/.env.example" "$SUPA_DIR/project/.env" || true
+    cp -rn "$SUPA_DIR/docker/." "$SUPA_DIR/project/" || true
+    ( cd "$SUPA_DIR/project" && docker compose pull && docker compose up -d )
+    warn "Supabase stack jalan di port 8000 (Studio) & 5432 (Postgres)."
+    warn "Edit ${SUPA_DIR}/project/.env untuk ganti password/JWT secret, lalu 'docker compose up -d' ulang."
+    DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5432/postgres"
+    ;;
+  none)
+    warn "DB_MODE=none — tidak install database lokal. App akan pakai Supabase remote dari .env."
+    DATABASE_URL=""
+    ;;
+  *)
+    err "DB_MODE tidak dikenal: ${DB_MODE} (gunakan postgres | supabase | none)"
+    exit 1
+    ;;
+esac
 
 # ---------------------------------------------------------------------
 # 2. Node.js (NodeSource) + npm
