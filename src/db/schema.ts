@@ -1,5 +1,6 @@
-// Drizzle schema — mirrors Supabase tables + local auth tables.
-// Used by drizzle-kit (CLI) and by server code via @/db/client.server.
+// Drizzle schema — mirrors the existing Postgres tables (Supabase asal)
+// plus tabel auth lokal (users, user_roles, sessions).
+// Digunakan oleh drizzle-kit (CLI) dan server code via @/db/client.server.
 import {
   pgTable,
   pgEnum,
@@ -8,20 +9,26 @@ import {
   timestamp,
   integer,
   boolean,
-  jsonb,
-  doublePrecision,
+  numeric,
   uniqueIndex,
   index,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 // ---------------------------------------------------------------
-// Enums
+// Enums (match Postgres types yang sudah ada)
 // ---------------------------------------------------------------
 export const appRoleEnum = pgEnum('app_role', ['admin', 'moderator', 'user']);
+export const sentimentTypeEnum = pgEnum('sentiment_type', [
+  'positive',
+  'negative',
+  'neutral',
+  'mixed',
+]);
+export const feedStatusEnum = pgEnum('feed_status', ['active', 'warning', 'error']);
 
 // ---------------------------------------------------------------
-// Auth (local, replaces Supabase auth.users)
+// Auth lokal (pengganti Supabase auth.users)
 // ---------------------------------------------------------------
 export const users = pgTable(
   'users',
@@ -53,7 +60,7 @@ export const userRoles = pgTable(
   }),
 );
 
-// Optional: server-side sessions (in addition to JWT cookie). Useful for revoke.
+// Sesi server-side opsional (di samping JWT cookie) untuk dukung revoke.
 export const sessions = pgTable('sessions', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   userId: uuid('user_id')
@@ -67,70 +74,89 @@ export const sessions = pgTable('sessions', {
 });
 
 // ---------------------------------------------------------------
-// News + RSS (mirror of Supabase public tables)
+// RSS feeds (kolom mengikuti Supabase asli)
+// ---------------------------------------------------------------
+export const rssFeeds = pgTable('rss_feeds', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  name: text('name').notNull(),
+  url: text('url').notNull().unique(),
+  category: text('category'),
+  status: feedStatusEnum('status').notNull().default('active'),
+  lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }),
+  healthScore: integer('health_score').notNull().default(100),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ---------------------------------------------------------------
+// News articles
 // ---------------------------------------------------------------
 export const newsArticles = pgTable(
   'news_articles',
   {
     id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    feedId: uuid('feed_id').references(() => rssFeeds.id, { onDelete: 'set null' }),
     title: text('title').notNull(),
-    link: text('link').notNull(),
-    excerpt: text('excerpt'),
-    content: text('content'),
-    imageUrl: text('image_url'),
-    source: text('source'),
-    author: text('author'),
+    url: text('url').notNull().unique(),
+    source: text('source').notNull(),
     category: text('category'),
+    content: text('content'),
+    excerpt: text('excerpt'),
+    author: text('author'),
+    imageUrl: text('image_url'),
+    language: text('language').default('id'),
     region: text('region'),
-    sentiment: text('sentiment'),
-    sentimentScore: doublePrecision('sentiment_score'),
-    keywords: jsonb('keywords').$type<string[]>().default(sql`'[]'::jsonb`),
-    entities: jsonb('entities').default(sql`'{}'::jsonb`),
-    metadata: jsonb('metadata').default(sql`'{}'::jsonb`),
-    feedId: uuid('feed_id'),
+    // text[] in Postgres
+    keywords: text('keywords').array().default(sql`'{}'::text[]`),
+    sentiment: sentimentTypeEnum('sentiment'),
+    sentimentScore: numeric('sentiment_score', { precision: 4, scale: 3 }),
+    confidence: numeric('confidence', { precision: 4, scale: 3 }),
     publishedAt: timestamp('published_at', { withTimezone: true }),
     fetchedAt: timestamp('fetched_at', { withTimezone: true }).notNull().defaultNow(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
-    linkUnique: uniqueIndex('news_articles_link_unique').on(t.link),
-    publishedIdx: index('news_articles_published_at_idx').on(t.publishedAt),
-    categoryIdx: index('news_articles_category_idx').on(t.category),
+    publishedIdx: index('idx_news_published_at').on(t.publishedAt),
+    categoryIdx: index('idx_news_category').on(t.category),
+    sourceIdx: index('idx_news_source').on(t.source),
+    sentimentIdx: index('idx_news_sentiment').on(t.sentiment),
   }),
 );
 
-export const rssFeeds = pgTable('rss_feeds', {
+// ---------------------------------------------------------------
+// Tracked keywords (sesuai Supabase)
+// ---------------------------------------------------------------
+export const trackedKeywords = pgTable('tracked_keywords', {
+  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+  keyword: text('keyword').notNull().unique(),
+  alertEnabled: boolean('alert_enabled').notNull().default(false),
+  mentionCount: integer('mention_count').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ---------------------------------------------------------------
+// Keyword queries (boolean expression yang disimpan)
+// ---------------------------------------------------------------
+export const keywordQueries = pgTable('keyword_queries', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
   name: text('name').notNull(),
-  url: text('url').notNull(),
-  category: text('category'),
-  isActive: boolean('is_active').notNull().default(true),
-  lastFetchedAt: timestamp('last_fetched_at', { withTimezone: true }),
-  lastError: text('last_error'),
-  fetchIntervalMinutes: integer('fetch_interval_minutes').default(60),
+  expression: text('expression').notNull(),
+  terms: text('terms').array().notNull().default(sql`'{}'::text[]`),
+  description: text('description'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const trackedKeywords = pgTable('tracked_keywords', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  keyword: text('keyword').notNull(),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  isActive: boolean('is_active').notNull().default(true),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
-
-export const keywordQueries = pgTable('keyword_queries', {
-  id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
-  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  query: text('query').notNull(),
-  resultCount: integer('result_count').default(0),
-  filters: jsonb('filters').default(sql`'{}'::jsonb`),
-  metadata: jsonb('metadata').default(sql`'{}'::jsonb`),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
-
+// ---------------------------------------------------------------
+// Type helpers
+// ---------------------------------------------------------------
 export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type UserRole = typeof userRoles.$inferSelect;
 export type NewsArticle = typeof newsArticles.$inferSelect;
+export type NewNewsArticle = typeof newsArticles.$inferInsert;
 export type RssFeed = typeof rssFeeds.$inferSelect;
+export type TrackedKeyword = typeof trackedKeywords.$inferSelect;
+export type KeywordQuery = typeof keywordQueries.$inferSelect;
+export type AppRole = (typeof appRoleEnum.enumValues)[number];
