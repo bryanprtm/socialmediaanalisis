@@ -1,7 +1,23 @@
 # Deploy ke Ubuntu Server (VPS Standalone)
 
 Script otomatis untuk install & menjalankan aplikasi ini di VPS Ubuntu
-20.04 / 22.04 / 24.04 menggunakan **Node.js + Bun + PM2 + Nginx**.
+20.04 / 22.04 / 24.04 menggunakan **Node.js + Bun + PM2 + Nginx**, dengan
+opsi database lokal.
+
+## Pilihan Database (VPS standalone)
+
+Aplikasi ini dibangun di atas **PostgreSQL** (Supabase = Postgres + Auth +
+RLS). Jadi database yang paling cocok untuk VPS adalah:
+
+| `DB_MODE`   | Engine                       | RAM minimum | Kapan dipilih                                                      |
+|-------------|------------------------------|-------------|--------------------------------------------------------------------|
+| `postgres`  | PostgreSQL 16 native (default) | 1 GB       | Paling ringan & stabil. Cocok 90% kebutuhan.                       |
+| `supabase`  | Supabase self-hosted (Docker)  | 4 GB       | Butuh Auth + Realtime + Storage + Studio UI seperti Lovable Cloud. |
+| `none`      | —                              | —          | Tetap pakai Lovable Cloud / Supabase remote (default lama).        |
+
+> **Catatan:** Node.js bukan database — Node hanya runtime. MongoDB / MySQL
+> tidak disarankan karena kode (RLS, `auth.users`, migrasi SQL, fungsi
+> `has_role`) sudah Postgres-specific.
 
 ## Yang akan diinstall
 
@@ -12,6 +28,7 @@ Script otomatis untuk install & menjalankan aplikasi ini di VPS Ubuntu
 - UFW firewall (allow SSH + HTTP/HTTPS)
 - Certbot (SSL Let's Encrypt, opsional bila `DOMAIN` di-set)
 - Build tools (`build-essential`, `python3`, `git`, dll)
+- **Database** sesuai `DB_MODE` (PostgreSQL native / Supabase Docker / none)
 
 ## Cara pakai
 
