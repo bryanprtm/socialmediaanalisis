@@ -272,6 +272,17 @@ echo " Aplikasi : ${APP_NAME}"
 echo " Direktori: ${APP_DIR}"
 echo " Port     : ${APP_PORT}"
 echo " Domain   : ${DOMAIN:-(belum di-set, akses via IP)}"
+echo " DB Mode  : ${DB_MODE}"
+if [[ "$DB_MODE" == "postgres" ]]; then
+  echo " DB Name  : ${PG_DB}"
+  echo " DB User  : ${PG_USER}"
+  echo " DB Pass  : ${PG_PASSWORD}"
+  echo " DB URL   : ${DATABASE_URL}"
+  warn "Simpan password DB di tempat aman & hapus dari log!"
+elif [[ "$DB_MODE" == "supabase" ]]; then
+  echo " Supabase : http://<IP>:8000  (Studio)"
+  echo " Stack    : /opt/supabase/project (docker compose)"
+fi
 echo " Cek      : pm2 status | systemctl status nginx"
 echo " Logs     : pm2 logs ${APP_NAME}"
 echo "----------------------------------------------------------------"
