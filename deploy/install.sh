@@ -22,6 +22,7 @@ PG_VERSION="${PG_VERSION:-16}"
 PG_DB="${PG_DB:-${APP_NAME//-/_}}"
 PG_USER="${PG_USER:-${APP_NAME//-/_}_user}"
 PG_PASSWORD="${PG_PASSWORD:-$(openssl rand -hex 16 2>/dev/null || echo "ChangeMe$(date +%s)")}"
+JWT_SECRET_VALUE="${JWT_SECRET:-$(openssl rand -hex 32 2>/dev/null || echo "change_me_$(date +%s%N)")}"
 
 log()  { echo -e "\e[1;32m[+] $*\e[0m"; }
 warn() { echo -e "\e[1;33m[!] $*\e[0m"; }
