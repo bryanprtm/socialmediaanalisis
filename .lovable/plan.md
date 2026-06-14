@@ -1,118 +1,35 @@
+## Fase 2 — Rencana migrasi bertahap
 
-# Migrasi Supabase → PostgreSQL Lokal (Drizzle + JWT)
+### Urutan modul (per turn berikutnya, satu modul per giliran)
 
-Aplikasi saat ini sepenuhnya bergantung pada Supabase (5 tabel, RLS, Auth, client SDK, server functions, types generated). Migrasi dikerjakan **bertahap** agar app tetap jalan di tiap langkah.
+1. **Fix Drizzle schema + auth foundation** (turn ini)
+2. **Auth UI + hook** (login/signup/logout pakai JWT cookie)
+3. **rss-sync** (admin RSS sync ke Postgres lokal)
+4. **news** (list & filter berita)
+5. **keywords / tracked_keywords / keyword_queries**
+6. **dashboard / sentiment / map / trends / lainnya**
+7. **Fase 3:** hapus folder `src/integrations/supabase`, dep `@supabase/*`, env `VITE_SUPABASE_*`, `attachSupabaseAuth` dari `start.ts`
 
-## Fase yang akan dikerjakan SEKARANG (Fase 1 — Fondasi)
+### Turn ini — apa yang akan saya kerjakan
 
-Fase 1 hanya menyiapkan stack baru hidup berdampingan dengan Supabase. **Belum ada route yang dipindah**, jadi aplikasi masih jalan normal pakai Supabase Cloud.
+**A. Perbaiki `src/db/schema.ts` agar 1:1 dengan Supabase asli:**
+- Tambah enum `sentiment_type` (`positive`, `negative`, `neutral`, `mixed`) dan `feed_status` (`active`, `warning`, `error`)
+- `news_articles`: `url` (bukan `link`), `keywords` `text[]`, `language`, `region`, `sentiment` (enum), `sentiment_score` & `confidence` `numeric(4,3)`, `fetched_at`, hapus `entities`/`metadata`
+- `rss_feeds`: `status` (enum), `last_synced_at`, `health_score` int; hapus `is_active`/`last_fetched_at`/`fetch_interval_minutes`
+- `tracked_keywords`: `keyword` (unique), `alert_enabled`, `mention_count` — hapus `user_id`/`is_active`
+- `keyword_queries`: `name`, `expression`, `terms` `text[]`, `description` — hapus `user_id`/`query`/dll
+- Tetap pertahankan `users`, `user_roles`, `sessions` (lokal)
 
-### 1. Dependency baru
-- `drizzle-orm`, `drizzle-kit`, `pg`, `@types/pg`
-- `bcryptjs`, `@types/bcryptjs`
-- `jsonwebtoken`, `@types/jsonwebtoken`
-- `dotenv` (untuk drizzle-kit CLI)
+**B. Helper auth tambahan:**
+- `src/lib/auth/roles.ts` — `hasRole(userId, role)` query Drizzle ke `user_roles`
+- Tidak menyentuh `requireSupabaseAuth` (masih hidup untuk modul yang belum migrasi)
 
-### 2. Drizzle setup
-```text
-src/db/
-├── client.ts          # pg Pool + drizzle() — server-only
-├── schema.ts          # mirror semua 5 tabel Supabase + users + sessions
-└── migrations/        # output drizzle-kit
-drizzle.config.ts      # root
-```
+**C. Catatan:** Server function pakai Drizzle hanya berjalan kalau `DATABASE_URL` di-set dan tabel sudah dimigrasi. Di preview Lovable Cloud, modul yang sudah dimigrasi akan error sampai user jalankan `bun run db:migrate` + `bun run db:migrate-from-supabase` di VPS. Ini sesuai desain "Bertahap untuk deploy VPS".
 
-Schema yang dibuat (mirror dari Supabase, plus auth lokal):
-- `users` (id, email, password_hash, created_at, updated_at) — pengganti `auth.users`
-- `user_roles` (user_id, role enum: admin/moderator/user)
-- `news_articles` (20 kolom — mirror persis)
-- `rss_feeds`, `tracked_keywords`, `keyword_queries`
-- Trigger `updated_at` via SQL raw
+### Catatan teknis
 
-### 3. Auth custom (JWT + bcrypt)
-```text
-src/lib/auth/
-├── password.ts         # bcrypt hash/verify
-├── jwt.ts              # sign/verify access token
-├── session.server.ts   # cookie httpOnly via @tanstack/react-start/server
-└── auth.functions.ts   # register / login / logout / getCurrentUser server fns
-```
+- Tidak ada perubahan UI di turn ini.
+- Tidak ada migrasi SQL Supabase — hanya kode TypeScript.
+- File yang disentuh: `src/db/schema.ts` (rewrite), `src/lib/auth/roles.ts` (baru).
 
-Auth middleware baru: `src/lib/auth/middleware.ts` (`requireAuth`) — pengganti `requireSupabaseAuth`. Inject `{ userId, user }` ke context.
-
-### 4. Replikasi data (script satu-kali)
-`scripts/migrate-from-supabase.ts` — baca semua tabel dari Supabase remote, insert ke Postgres lokal. Dijalankan user di VPS:
-```bash
-bun run scripts/migrate-from-supabase.ts
-```
-
-### 5. install.sh — update
-- Set default `DB_MODE=postgres` (sudah ada)
-- Tambah step: `bun run db:migrate` (drizzle-kit) setelah `bun install`
-- Generate `JWT_SECRET` random 64-hex ke `.env`
-- Pesan akhir: instruksi jalankan migrate-from-supabase script
-
-### 6. .env template diperluas
-```
-DATABASE_URL=postgresql://...
-JWT_SECRET=<random 64 hex>
-JWT_EXPIRES_IN=7d
-# Supabase masih ada selama Fase 1-2 untuk koeksistensi
-VITE_SUPABASE_URL=...
-```
-
-### 7. Konfig drizzle-kit + package.json scripts
-- `db:generate` — generate migration dari schema
-- `db:migrate` — apply migration
-- `db:studio` — drizzle studio (opsional, ganti Supabase Studio)
-
-## Fase 2 (sesi berikutnya — atas perintah Anda)
-Migrasi route/server-fn satu per satu dari `supabase.from(...)` ke `db.select()...`:
-- `rss-sync.functions.ts`
-- `ai-narrative.functions.ts`
-- `whatsapp-report.functions.ts`
-- `sentiment-analysis.functions.ts`
-- Semua route (`news`, `dashboard`, `media`, dll)
-- Halaman `/auth` → form login/register custom
-- `_authenticated/route.tsx` → cek cookie JWT (bukan supabase.auth.getUser)
-
-## Fase 3 (final — atas perintah Anda)
-- Hapus folder `src/integrations/supabase/`
-- Hapus folder `supabase/` (config + migrations)
-- Hapus dependency `@supabase/*`
-- Hapus var `VITE_SUPABASE_*` dari `.env`
-- Hapus `attachSupabaseAuth` dari `src/start.ts`
-
-## Detail Teknis Penting
-
-**Cookie session**: gunakan `useSession` dari `@tanstack/react-start/server` (encrypted httpOnly) menyimpan `{ userId }`. JWT dipakai untuk verifikasi cepat tanpa hit DB.
-
-**RLS gone**: Postgres lokal **tidak pakai RLS**. Otorisasi dilakukan di kode (server fn cek `userId === row.user_id` atau `has_role`). Ini sengaja — RLS Supabase butuh `auth.uid()` JWT claim yang tidak ada di stack baru.
-
-**pg Pool**: 1 pool global di `src/db/client.ts`, hanya di-import dari `.server.ts` / handler server fn (jangan top-level di `.functions.ts`).
-
-**Workers vs VPS runtime**: Stack baru (`pg`, `bcryptjs`, `jsonwebtoken`) **tidak jalan di Cloudflare Workers** — hanya di Node.js (VPS). Jadi setelah Fase 3, target deploy harus Node SSR (`.output/server/index.mjs`), bukan Workers. `install.sh` sudah handle ini.
-
-**Lovable Cloud preview**: selama Fase 1-2, preview di lovable.app tetap pakai Supabase Cloud agar tidak break. Postgres lokal cuma aktif kalau di-deploy ke VPS dengan `DATABASE_URL` di-set.
-
-## File yang akan dibuat/diubah di Fase 1
-
-**Baru:**
-- `drizzle.config.ts`
-- `src/db/client.ts`
-- `src/db/schema.ts`
-- `src/lib/auth/password.ts`
-- `src/lib/auth/jwt.ts`
-- `src/lib/auth/session.server.ts`
-- `src/lib/auth/middleware.ts`
-- `src/lib/auth/auth.functions.ts`
-- `scripts/migrate-from-supabase.ts`
-- `deploy/MIGRATION.md` (panduan jalanin script di VPS)
-
-**Diubah:**
-- `package.json` (deps + scripts)
-- `deploy/install.sh` (drizzle migrate + JWT_SECRET)
-- `deploy/README.md` (tambah section migrasi)
-- `.env.example` (kalau ada) — bukan `.env` (read-only)
-
-Boleh saya lanjut eksekusi Fase 1?
+Setelah turn ini selesai, balas **"lanjut auth"** untuk modul berikutnya.
