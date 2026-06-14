@@ -184,6 +184,12 @@ fi
 log "Install dependencies (bun install)..."
 sudo -u "$APP_USER" -H bash -lc "cd '$APP_DIR' && bun install --frozen-lockfile || bun install"
 
+if [[ "$DB_MODE" == "postgres" || "$DB_MODE" == "supabase" ]]; then
+  log "Generate & apply migrasi Drizzle..."
+  sudo -u "$APP_USER" -H bash -lc "cd '$APP_DIR' && bun run db:generate || true"
+  sudo -u "$APP_USER" -H bash -lc "cd '$APP_DIR' && bun run db:migrate || warn 'drizzle migrate gagal — jalankan manual: bun run db:migrate'"
+fi
+
 log "Build production..."
 sudo -u "$APP_USER" -H bash -lc "cd '$APP_DIR' && bun run build"
 
