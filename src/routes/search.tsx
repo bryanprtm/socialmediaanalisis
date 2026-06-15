@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
 import { Globe, FileText, TrendingUp, ExternalLink, KeyRound, Sparkles } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/search")({
   head: () => ({
