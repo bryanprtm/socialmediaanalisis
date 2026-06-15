@@ -462,6 +462,20 @@ function Page() {
           )}
         </Panel>
       </div>
+
+      <AINarrative
+        className="mt-6"
+        page="News Database"
+        context={{
+          total: counts.total,
+          positif: counts.positive,
+          negatif: counts.negative,
+          jumlah_sumber: counts.sources,
+          filter_sentimen: filter,
+          query_aktif: active?.name ?? null,
+          judul_terbaru: filtered.slice(0, 10).map((a) => ({ judul: a.title, sumber: a.source, sentimen: a.sentiment, kategori: a.category })),
+        }}
+      />
     </PageShell>
   );
 }
