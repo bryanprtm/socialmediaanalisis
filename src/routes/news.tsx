@@ -10,6 +10,7 @@ import { evalExpression } from "@/lib/keyword-query";
 import { toast } from "sonner";
 import { syncAllRssFeeds } from "@/lib/rss-sync.functions";
 import { analyzeMissingSentiment } from "@/lib/sentiment-analysis.functions";
+import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/news")({
   head: () => ({
