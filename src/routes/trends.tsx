@@ -118,6 +118,7 @@ function TrendsPage() {
           trending_topik: trending.map((k) => `${k.name}(${k.count})`),
           top_kategori: topCats.map((c) => `${c.name}(${c.count})`),
           evolusi_7_hari: days,
+          judul_berita: filtered.slice(0, 20).map((a) => ({ judul: a.title, kategori: a.category, sumber: a.source })),
           filter_aktif: active?.name ?? null,
         }}
       />
