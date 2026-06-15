@@ -4,6 +4,7 @@ import { ResponsiveContainer, BarChart, Bar as RBar, XAxis, YAxis, CartesianGrid
 import { Newspaper, Globe, MessageCircle, Bell, RefreshCw, ChevronRight, TrendingUp, BarChart3, Activity, ExternalLink } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { KeywordIntelligence } from "@/components/KeywordIntelligence";
+import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -172,6 +173,21 @@ function DashboardPage() {
       </div>
 
       <KeywordIntelligence className="mt-6" articles={filtered} />
+
+      <AINarrative
+        className="mt-6"
+        page="Dashboard Analytics"
+        context={{
+          total_berita: s.total,
+          sumber_aktif: s.sources.length,
+          sentiment: { positif_pct: s.pctPos, negatif_pct: s.pctNeg, netral_pct: s.pctNeu, positif: s.pos, negatif: s.neg, netral: s.neu },
+          top_sumber: topSources.map((x) => `${x.name}(${x.count})`),
+          top_keyword: topKeywords.map((x) => `${x.name}(${x.count})`),
+          timeline_24jam: buckets,
+          berita_terbaru: recent.map((a) => ({ judul: a.title, sumber: a.source, sentimen: a.sentiment, kategori: a.category })),
+          filter_aktif: active?.name ?? null,
+        }}
+      />
     </PageShell>
   );
 }

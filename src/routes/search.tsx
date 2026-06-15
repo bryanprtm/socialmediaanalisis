@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell, Panel, MetricCard, Pill } from "@/components/PageShell";
 import { Globe, FileText, TrendingUp, ExternalLink, KeyRound, Sparkles } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/search")({
   head: () => ({
@@ -106,6 +107,21 @@ function Page() {
           )}
         </Panel>
       </div>
+
+      <AINarrative
+        className="mt-6"
+        page="Pencarian & Monitoring"
+        context={{
+          query_aktif: active?.name ?? null,
+          ekspresi: active?.expression ?? null,
+          total_hasil: filtered.length,
+          ditampilkan: results.length,
+          sentiment: { positif_pct: s.pctPos, negatif_pct: s.pctNeg, netral_pct: s.pctNeu },
+          top_sumber: topSources.map((x) => `${x.name}(${x.count})`),
+          top_kategori: s.categories.slice(0, 8).map((c) => `${c.name}(${c.count})`),
+          contoh_judul: results.slice(0, 10).map((r) => r.title),
+        }}
+      />
     </PageShell>
   );
 }

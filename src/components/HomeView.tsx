@@ -25,6 +25,7 @@ import { Link } from "@tanstack/react-router";
 import logo from "@/assets/propam-logo.png";
 import { Panel, MetricCard, Bar, Pill } from "./PageShell";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { AINarrative } from "./AINarrative";
 
 type TabId = "fitur" | "aktivitas" | "quick";
 
@@ -346,6 +347,22 @@ export function HomeView() {
               </Link>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="px-4 pb-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <AINarrative
+            page="Beranda — Ringkasan Monitoring"
+            context={{
+              total_berita: s.total,
+              sentiment: { positif_pct: s.pctPos, negatif_pct: s.pctNeg, netral_pct: s.pctNeu },
+              top_sumber: s.sources.slice(0, 8).map((x) => `${x.name}(${x.count})`),
+              top_kategori: s.categories.slice(0, 8).map((c) => `${c.name}(${c.count})`),
+              top_keyword: s.keywords.slice(0, 10).map((k) => `${k.name}(${k.count})`),
+              top_provinsi: s.regions.slice(0, 8).map((r) => `${r.name}(${r.count})`),
+            }}
+          />
         </div>
       </section>
     </div>
