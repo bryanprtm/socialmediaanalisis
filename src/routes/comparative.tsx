@@ -116,6 +116,8 @@ function Page() {
           context={{
             sumber_A: { nama: a, total: sA.total, positif_pct: sA.pos, negatif_pct: sA.neg, netral_pct: sA.neu },
             sumber_B: { nama: b, total: sB.total, positif_pct: sB.pos, negatif_pct: sB.neg, netral_pct: sB.neu },
+            judul_berita_A: filtered.filter((x) => x.source === a).slice(0, 12).map((x) => ({ judul: x.title, sentimen: x.sentiment })),
+            judul_berita_B: filtered.filter((x) => x.source === b).slice(0, 12).map((x) => ({ judul: x.title, sentimen: x.sentiment })),
             jumlah_sumber_tersedia: sourceNames.length,
           }}
         />

@@ -161,6 +161,7 @@ function SentimentPage() {
           persen_netral: s.pctNeu,
           top_keywords: topKw.map((k) => `${k.name}(${k.count})`),
           top_sumber: topSrc.map((src) => `${src.name}(${src.count})`),
+          judul_berita: filtered.slice(0, 20).map((a) => ({ judul: a.title, sentimen: a.sentiment, sumber: a.source })),
           filter_aktif: active?.name ?? null,
         }}
       />

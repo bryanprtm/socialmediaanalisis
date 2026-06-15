@@ -216,6 +216,7 @@ function Page() {
           ranking_provinsi: regionRanking.slice(0, 15).map((r) => `${r.name}(${r.count})`),
           provinsi_dipilih: selected,
           jumlah_artikel_provinsi_dipilih: selected ? provinceArticles.length : null,
+          judul_berita: (selected ? provinceArticles : enrichedArticles).slice(0, 20).map((a) => ({ judul: a.title, provinsi: a.region, sumber: a.source })),
           filter_aktif: active?.name ?? null,
         }}
       />
