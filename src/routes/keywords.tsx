@@ -111,7 +111,7 @@ function Page() {
               <p className="text-sm text-muted-foreground">Belum ada query. Tambahkan di panel kanan.</p>
             </div>
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="max-h-[640px] divide-y divide-border overflow-y-auto pr-1">
               {queries.map((q) => {
                 const isEditing = editingId === q.id;
                 const isActive = active?.id === q.id;
