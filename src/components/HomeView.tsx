@@ -25,6 +25,7 @@ import { Link } from "@tanstack/react-router";
 import logo from "@/assets/propam-logo.png";
 import { Panel, MetricCard, Bar, Pill } from "./PageShell";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { AINarrative } from "./AINarrative";
 
 type TabId = "fitur" | "aktivitas" | "quick";
 
