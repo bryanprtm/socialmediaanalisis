@@ -140,6 +140,7 @@ function Page() {
           proyeksi_h_plus_7: projectionHPlus7,
           proyeksi_7_hari: trend.slice(7).map((t) => t.predicted),
           top_keywords: topKeywords.map((k) => `${k.name}(${k.count})`),
+          judul_berita: filtered.slice(0, 20).map((a) => ({ judul: a.title, sumber: a.source, tanggal: a.published_at })),
           filter_aktif: active?.name ?? null,
         }}
       />
