@@ -205,6 +205,20 @@ function Page() {
           </ul>
         )}
       </Panel>
+
+      <AINarrative
+        className="mt-6"
+        page="Peta Indonesia — Distribusi Provinsi"
+        context={{
+          total_artikel: enrichedArticles.length,
+          total_artikel_terdeteksi_provinsi: totalDetected,
+          persen_positif_keseluruhan: pctPosOverall,
+          ranking_provinsi: regionRanking.slice(0, 15).map((r) => `${r.name}(${r.count})`),
+          provinsi_dipilih: selected,
+          jumlah_artikel_provinsi_dipilih: selected ? provinceArticles.length : null,
+          filter_aktif: active?.name ?? null,
+        }}
+      />
     </PageShell>
   );
 }
