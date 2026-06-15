@@ -112,6 +112,7 @@ function MediaPage() {
           sumber_unik: s.sources.length,
           per_sumber: perSource.slice(0, 10),
           per_kategori: s.categories.slice(0, 8).map((c) => `${c.name}(${c.count})`),
+          judul_berita: filtered.slice(0, 20).map((a) => ({ judul: a.title, sumber: a.source, kategori: a.category })),
           filter_aktif: active?.name ?? null,
         }}
       />
