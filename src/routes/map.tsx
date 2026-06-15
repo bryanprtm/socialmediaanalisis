@@ -5,6 +5,7 @@ import { Map as MapIcon, MapPin, TrendingUp, Activity, X, ExternalLink } from "l
 import { useFilteredArticles } from "@/hooks/use-filtered-articles";
 import { IndonesiaMap, articleMatchesProvince } from "@/components/IndonesiaMap";
 import { resolveArticleProvince } from "@/lib/province-detect";
+import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/map")({
   head: () => ({
