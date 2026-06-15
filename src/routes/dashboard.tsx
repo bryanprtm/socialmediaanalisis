@@ -4,6 +4,7 @@ import { ResponsiveContainer, BarChart, Bar as RBar, XAxis, YAxis, CartesianGrid
 import { Newspaper, Globe, MessageCircle, Bell, RefreshCw, ChevronRight, TrendingUp, BarChart3, Activity, ExternalLink } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { KeywordIntelligence } from "@/components/KeywordIntelligence";
+import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
