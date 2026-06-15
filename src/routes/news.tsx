@@ -50,7 +50,7 @@ function timeAgo(iso: string | null) {
 }
 
 function Page() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading: authLoading } = useAuth();
   const { active } = useActiveKeyword();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,23 +59,44 @@ function Page() {
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<Article>>({});
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminUserId, setAdminUserId] = useState<string | null>(null);
+  const [roleLoading, setRoleLoading] = useState(true);
+  const isAdmin = !!user?.id && adminUserId === user.id;
   const syncAllFn = useServerFn(syncAllRssFeeds);
   const analyzeFn = useServerFn(analyzeMissingSentiment);
 
   useEffect(() => {
-    if (!user) { setIsAdmin(false); return; }
+    let cancelled = false;
+    setAdminUserId(null);
+    if (!user?.id) {
+      setRoleLoading(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+    setRoleLoading(true);
     supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
       .eq("role", "admin")
       .maybeSingle()
-      .then(({ data }) => setIsAdmin(!!data));
-  }, [user]);
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        setAdminUserId(!error && data ? user.id : null);
+        setRoleLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
 
   async function syncAll(silent = false) {
+    if (!isAdmin) {
+      if (!silent) toast.error("Akses admin diperlukan untuk sync RSS");
+      return;
+    }
     try {
       const r = await syncAllFn();
       if (!silent) toast.success(`Sync selesai: +${r.totalAdded} berita baru dari ${r.feedCount} feed${r.errors ? ` (${r.errors} error)` : ""}`);
@@ -85,6 +106,10 @@ function Page() {
   }
 
   async function analyzeSentiment(silent = false) {
+    if (!isAdmin) {
+      if (!silent) toast.error("Akses admin diperlukan untuk analisa sentiment");
+      return;
+    }
     try {
       const r = await analyzeFn({ data: { limit: 200 } });
       if (!silent) toast.success(`Analisa selesai: ${r.updated}/${r.processed} berita terklasifikasi · ${r.remaining} sisa belum dianalisa`);
@@ -134,7 +159,7 @@ function Page() {
 
   // Auto sync RSS + analyze sentiment every 1 minute (admin only)
   useEffect(() => {
-    if (!isAuthenticated || !isAdmin) return;
+    if (authLoading || roleLoading || !isAuthenticated || !isAdmin) return;
     let cancelled = false;
     const run = async () => {
       if (cancelled) return;
@@ -149,7 +174,7 @@ function Page() {
       clearInterval(id);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, isAdmin]);
+  }, [authLoading, roleLoading, isAuthenticated, isAdmin]);
 
 
   async function addArticle(e: React.FormEvent) {
@@ -231,7 +256,7 @@ function Page() {
       description="Penyimpanan terpusat seluruh berita yang dipantau — real-time, dapat dicari, terhubung ke pipeline AI."
       actions={
         <div className="flex items-center gap-2">
-          {isAuthenticated && (
+          {isAdmin && (
             <span className="hidden items-center gap-1.5 rounded-lg border border-border bg-panel px-3 py-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground md:inline-flex">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
               Auto-sync · 1m
