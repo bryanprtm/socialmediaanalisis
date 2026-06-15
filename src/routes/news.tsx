@@ -50,7 +50,7 @@ function timeAgo(iso: string | null) {
 }
 
 function Page() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { active } = useActiveKeyword();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,8 +59,21 @@ function Page() {
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<Article>>({});
+  const [isAdmin, setIsAdmin] = useState(false);
   const syncAllFn = useServerFn(syncAllRssFeeds);
   const analyzeFn = useServerFn(analyzeMissingSentiment);
+
+  useEffect(() => {
+    if (!user) { setIsAdmin(false); return; }
+    supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data));
+  }, [user]);
+
 
   async function syncAll(silent = false) {
     try {
@@ -121,7 +134,7 @@ function Page() {
 
   // Auto sync RSS + analyze sentiment every 1 minute (admin only)
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !isAdmin) return;
     let cancelled = false;
     const run = async () => {
       if (cancelled) return;
@@ -136,7 +149,8 @@ function Page() {
       clearInterval(id);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isAdmin]);
+
 
   async function addArticle(e: React.FormEvent) {
     e.preventDefault();
