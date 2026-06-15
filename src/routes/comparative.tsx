@@ -108,6 +108,18 @@ function Page() {
           </Panel>
         </>
       )}
+
+      {sourceNames.length >= 2 && (
+        <AINarrative
+          className="mt-6"
+          page="Analisis Komparatif Sumber Media"
+          context={{
+            sumber_A: { nama: a, total: sA.total, positif_pct: sA.pos, negatif_pct: sA.neg, netral_pct: sA.neu },
+            sumber_B: { nama: b, total: sB.total, positif_pct: sB.pos, negatif_pct: sB.neg, netral_pct: sB.neu },
+            jumlah_sumber_tersedia: sourceNames.length,
+          }}
+        />
+      )}
     </PageShell>
   );
 }
