@@ -1,11 +1,8 @@
 # Deploy ke Ubuntu Server (VPS Standalone)
 
-> **Migrasi Supabase → Postgres lokal sedang berjalan.** Lihat
-> [`MIGRATION.md`](./MIGRATION.md) untuk status fase, langkah migrasi data,
-> dan roadmap menghapus Supabase sepenuhnya.
-
 Script otomatis untuk install & menjalankan aplikasi ini di VPS Ubuntu
-20.04 / 22.04 / 24.04 menggunakan **Node.js + Bun + PM2 + Nginx + PostgreSQL**.
+20.04 / 22.04 / 24.04 menggunakan **Node.js + Bun + PM2 + Nginx**, dengan
+opsi database lokal.
 
 ## Pilihan Database (VPS standalone)
 
