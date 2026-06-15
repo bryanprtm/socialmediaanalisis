@@ -4,6 +4,7 @@ import { PageShell, Panel, Pill } from "@/components/PageShell";
 import { ResponsiveContainer, BarChart, Bar as RBar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { GitCompare, TrendingUp } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
+import { AINarrative } from "@/components/AINarrative";
 
 export const Route = createFileRoute("/comparative")({
   head: () => ({ meta: [{ title: "Comparative Analysis — TOC Sat Bantek" }, { name: "description", content: "Bandingkan sumber media dari news database." }] }),
