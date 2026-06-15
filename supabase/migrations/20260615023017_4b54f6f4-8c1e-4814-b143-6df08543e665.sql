@@ -1,0 +1,2 @@
+ALTER TABLE public.user_roles DROP CONSTRAINT IF EXISTS user_roles_user_id_fkey;
+INSERT INTO public.user_roles (user_id, role) VALUES ('ad6ec6d5-4137-4cfd-988e-d0fe34828748', 'admin') ON CONFLICT (user_id, role) DO NOTHING;
