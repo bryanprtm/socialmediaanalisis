@@ -173,6 +173,7 @@ function Page() {
           top_keywords: s.keywords.slice(0, 8).map((k) => `${k.name}(${k.count})`),
           top_sumber: s.sources.slice(0, 5).map((src) => `${src.name}(${src.count})`),
           rekomendasi_rule_based: recs.map((r) => `[${r.priority}] ${r.title}`),
+          judul_berita: filtered.slice(0, 20).map((a) => ({ judul: a.title, sentimen: a.sentiment, sumber: a.source })),
           filter_aktif: active?.name ?? null,
         }}
       />
