@@ -134,7 +134,7 @@ function Page() {
 
   // Auto sync RSS + analyze sentiment every 1 minute (admin only)
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !isAdmin) return;
     let cancelled = false;
     const run = async () => {
       if (cancelled) return;
@@ -149,7 +149,8 @@ function Page() {
       clearInterval(id);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isAdmin]);
+
 
   async function addArticle(e: React.FormEvent) {
     e.preventDefault();
