@@ -138,6 +138,7 @@ function Page() {
           top_sumber: topSources.map((src) => `${src.name}(${src.count})`),
           top_kategori: topCats.map((c) => `${c.name}(${c.count})`),
           edge_terkuat: [...links].sort((a, b) => b.w - a.w).slice(0, 8).map((l) => `${l.a}↔${l.b}:${l.w}`),
+          judul_berita: filtered.slice(0, 20).map((a) => ({ judul: a.title, sumber: a.source, kategori: a.category })),
           filter_aktif: active?.name ?? null,
         }}
       />
