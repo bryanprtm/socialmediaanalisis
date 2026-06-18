@@ -127,32 +127,161 @@ function Page() {
     const doc = new jsPDF({ unit: "pt", format: "a4" });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 40;
+    const margin = 56; // ~0.78"
     const maxWidth = pageWidth - margin * 2;
     const tpl = templates.find((t) => t.id === templateId) ?? templates[0];
+    const tanggal = new Date().toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+    const waktu = new Date().toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
+    // Strip emoji & simbol non-latin agar tidak jadi kotak di helvetica
+    const clean = (t: string) =>
+      t
+        .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F000}-\u{1F2FF}]/gu, "")
+        .replace(/[•●▪◆■►▶▸◦·]/g, "-")
+        .replace(/[—–]/g, "-")
+        .replace(/[“”]/g, '"')
+        .replace(/[‘’]/g, "'")
+        .trimEnd();
+
+    let y = margin;
+
+    // ===== HEADER / KOP =====
+    doc.setFillColor(15, 42, 66);
+    doc.rect(0, 0, pageWidth, 90, "F");
+    doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text("Laporan TOC Sat Bantek", margin, margin);
+    doc.setFontSize(16);
+    doc.text("LAPORAN INTELIJEN MEDIA", margin, 38);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text(
-      `${tpl.name} • ${new Date().toLocaleString("id-ID")}`,
-      margin,
-      margin + 16,
-    );
+    doc.text("TOC Sat Bantek — Media Monitoring & Sentiment Analysis", margin, 56);
+    doc.setFontSize(9);
+    doc.text(`${tpl.name.toUpperCase()}  |  ${tanggal}  |  ${waktu} WIB`, margin, 72);
 
-    doc.setFontSize(10);
-    const lines = doc.splitTextToSize(report, maxWidth) as string[];
-    const lineHeight = 13;
-    let y = margin + 40;
-    for (const line of lines) {
-      if (y > pageHeight - margin) {
+    // garis aksen
+    doc.setDrawColor(212, 175, 55);
+    doc.setLineWidth(2);
+    doc.line(margin, 86, pageWidth - margin, 86);
+
+    doc.setTextColor(20, 20, 20);
+    y = 120;
+
+    // ===== META BOX =====
+    doc.setDrawColor(220, 220, 220);
+    doc.setFillColor(248, 249, 251);
+    doc.roundedRect(margin, y, maxWidth, 56, 4, 4, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.setTextColor(90, 90, 90);
+    doc.text("PERIODE", margin + 14, y + 18);
+    doc.text("TEMPLATE", margin + 14 + maxWidth / 3, y + 18);
+    doc.text("FILTER AKTIF", margin + 14 + (maxWidth / 3) * 2, y + 18);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(20, 20, 20);
+    doc.text(tpl.periode, margin + 14, y + 38);
+    doc.text(tpl.name, margin + 14 + maxWidth / 3, y + 38);
+    doc.text(active?.name ?? "Semua data", margin + 14 + (maxWidth / 3) * 2, y + 38);
+    y += 76;
+
+    // ===== BODY =====
+    const lineHeight = 14;
+    const sectionHeadingSize = 12;
+    const bodySize = 10.5;
+
+    const ensureSpace = (need: number) => {
+      if (y + need > pageHeight - margin - 30) {
+        addFooter();
         doc.addPage();
         y = margin;
       }
-      doc.text(line, margin, y);
-      y += lineHeight;
+    };
+
+    const rawLines = report.split(/\r?\n/);
+    // Heading detector: ALL CAPS line, or line ending with ":", or numbered "1. JUDUL"
+    const isHeading = (raw: string) => {
+      const t = raw.trim();
+      if (!t) return false;
+      if (/^[A-Z0-9 .\-]{6,}$/.test(t) && t === t.toUpperCase() && /[A-Z]/.test(t)) return true;
+      if (/^\d+\.\s+[A-Z]/.test(t) && t.length < 80) return true;
+      return false;
+    };
+
+    for (const raw of rawLines) {
+      const line = clean(raw);
+      if (!line.trim()) {
+        y += lineHeight / 2;
+        continue;
+      }
+
+      if (isHeading(line)) {
+        ensureSpace(lineHeight * 2 + 8);
+        y += 6;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(sectionHeadingSize);
+        doc.setTextColor(15, 42, 66);
+        doc.text(line.toUpperCase(), margin, y);
+        y += 6;
+        doc.setDrawColor(212, 175, 55);
+        doc.setLineWidth(0.8);
+        doc.line(margin, y, margin + 60, y);
+        y += 14;
+        doc.setTextColor(20, 20, 20);
+        continue;
+      }
+
+      // bullet?
+      const bulletMatch = line.match(/^\s*[-*]\s+(.*)$/);
+      const isBullet = !!bulletMatch;
+      const text = bulletMatch ? bulletMatch[1] : line;
+      const indent = isBullet ? 18 : 0;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(bodySize);
+      const wrapped = doc.splitTextToSize(text, maxWidth - indent) as string[];
+      for (let i = 0; i < wrapped.length; i++) {
+        ensureSpace(lineHeight);
+        if (isBullet && i === 0) {
+          doc.setFont("helvetica", "bold");
+          doc.text("•", margin + 4, y);
+          doc.setFont("helvetica", "normal");
+        }
+        doc.text(wrapped[i], margin + indent, y);
+        y += lineHeight;
+      }
+    }
+
+    // ===== FOOTER pada setiap halaman =====
+    function addFooter() {
+      const total = doc.getNumberOfPages();
+      const current = doc.getCurrentPageInfo().pageNumber;
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.5);
+      doc.line(margin, pageHeight - 40, pageWidth - margin, pageHeight - 40);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(120, 120, 120);
+      doc.text("TOC Sat Bantek — Dokumen Resmi (Internal)", margin, pageHeight - 24);
+      doc.text(
+        `Halaman ${current} dari ${total}`,
+        pageWidth - margin,
+        pageHeight - 24,
+        { align: "right" },
+      );
+      doc.setTextColor(20, 20, 20);
+    }
+
+    // Tambahkan footer ke semua halaman
+    const totalPages = doc.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p);
+      addFooter();
     }
 
     doc.save(`laporan-toc-sat-bantek-${new Date().toISOString().slice(0, 10)}.pdf`);
