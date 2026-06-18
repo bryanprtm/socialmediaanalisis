@@ -23,31 +23,29 @@ export function PageShell({
   return (
     <div className="min-h-screen bg-background">
       <TopNav />
-      {(active || dateActive) && (
-        <div className="border-b border-primary/20 bg-primary/5">
-          <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3 px-6 py-2.5">
-            {active ? (
-              <div className="flex flex-wrap items-center gap-3">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <span className="font-mono text-[10px] uppercase tracking-wider text-primary">Filter Aktif</span>
-                <span className="text-sm font-semibold text-foreground">{active.name}</span>
-                <code className="rounded-md border border-primary/20 bg-background/60 px-2 py-0.5 font-mono text-[11px] text-primary">
-                  {active.expression}
-                </code>
-                <button
-                  onClick={() => setActiveId(null)}
-                  className="ml-2 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <X className="h-3 w-3" /> Hapus filter
-                </button>
-              </div>
-            ) : (
-              <span className="font-mono text-[10px] uppercase tracking-wider text-primary">Filter</span>
-            )}
-            <DateFilterBar />
-          </div>
+      <div className="border-b border-primary/20 bg-primary/5">
+        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3 px-6 py-2.5">
+          {active ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <span className="font-mono text-[10px] uppercase tracking-wider text-primary">Filter Aktif</span>
+              <span className="text-sm font-semibold text-foreground">{active.name}</span>
+              <code className="rounded-md border border-primary/20 bg-background/60 px-2 py-0.5 font-mono text-[11px] text-primary">
+                {active.expression}
+              </code>
+              <button
+                onClick={() => setActiveId(null)}
+                className="ml-2 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+              >
+                <X className="h-3 w-3" /> Hapus filter
+              </button>
+            </div>
+          ) : (
+            <span className="font-mono text-[10px] uppercase tracking-wider text-primary">Filter</span>
+          )}
+          <DateFilterBar />
         </div>
-      )}
+      </div>
       <div className="mx-auto max-w-[1440px] px-6 py-8">
         <header className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
