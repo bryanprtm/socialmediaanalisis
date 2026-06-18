@@ -238,6 +238,9 @@ function Page() {
               <button onClick={handleDownloadTxt} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-panel-elevated px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-foreground hover:border-primary/40">
                 <Download className="h-3 w-3" /> .txt
               </button>
+              <button onClick={handleDownloadPdf} className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-primary hover:bg-primary/20">
+                <Download className="h-3 w-3" /> .pdf
+              </button>
               <a href={wahatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md bg-success/15 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-success hover:bg-success/25">
                 <ExternalLink className="h-3 w-3" /> Buka WhatsApp
               </a>
