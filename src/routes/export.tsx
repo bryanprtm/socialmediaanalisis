@@ -121,6 +121,43 @@ function Page() {
     URL.revokeObjectURL(url);
   }
 
+  async function handleDownloadPdf() {
+    if (!report) return;
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 40;
+    const maxWidth = pageWidth - margin * 2;
+    const tpl = templates.find((t) => t.id === templateId) ?? templates[0];
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("Laporan TOC Sat Bantek", margin, margin);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(
+      `${tpl.name} • ${new Date().toLocaleString("id-ID")}`,
+      margin,
+      margin + 16,
+    );
+
+    doc.setFontSize(10);
+    const lines = doc.splitTextToSize(report, maxWidth) as string[];
+    const lineHeight = 13;
+    let y = margin + 40;
+    for (const line of lines) {
+      if (y > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(line, margin, y);
+      y += lineHeight;
+    }
+
+    doc.save(`laporan-toc-sat-bantek-${new Date().toISOString().slice(0, 10)}.pdf`);
+  }
+
   const wahatsappUrl = report ? `https://wa.me/?text=${encodeURIComponent(report)}` : "#";
 
   return (
@@ -200,6 +237,9 @@ function Page() {
               </button>
               <button onClick={handleDownloadTxt} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-panel-elevated px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-foreground hover:border-primary/40">
                 <Download className="h-3 w-3" /> .txt
+              </button>
+              <button onClick={handleDownloadPdf} className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-primary hover:bg-primary/20">
+                <Download className="h-3 w-3" /> .pdf
               </button>
               <a href={wahatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md bg-success/15 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-success hover:bg-success/25">
                 <ExternalLink className="h-3 w-3" /> Buka WhatsApp
