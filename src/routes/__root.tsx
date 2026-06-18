@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { ActiveKeywordProvider } from "@/hooks/use-active-keyword";
 import { DateFilterProvider } from "@/hooks/use-date-filter";
 import { ArticleDialogProvider } from "@/components/ArticleDialog";
+import { ArticlesProvider } from "@/hooks/use-filtered-articles";
 
 import appCss from "../styles.css?url";
 
@@ -98,9 +99,11 @@ function RootComponent() {
   return (
     <ActiveKeywordProvider>
       <DateFilterProvider>
-        <ArticleDialogProvider>
-          <Outlet />
-        </ArticleDialogProvider>
+        <ArticlesProvider>
+          <ArticleDialogProvider>
+            <Outlet />
+          </ArticleDialogProvider>
+        </ArticlesProvider>
       </DateFilterProvider>
     </ActiveKeywordProvider>
   );

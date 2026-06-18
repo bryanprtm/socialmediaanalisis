@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveKeyword } from "@/hooks/use-active-keyword";
 import { useDateFilter, matchesDateFilter } from "@/hooks/use-date-filter";
@@ -33,16 +33,20 @@ function articleText(a: Article) {
   ].join(" ");
 }
 
-export function useFilteredArticles() {
-  const { active } = useActiveKeyword();
-  const { startDate, endDate } = useDateFilter();
+type ArticlesCtx = {
+  articles: Article[];
+  loading: boolean;
+};
+
+const ArticlesContext = createContext<ArticlesCtx | null>(null);
+
+export function ArticlesProvider({ children }: { children: ReactNode }) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
     async function load() {
-      setLoading(true);
       const pageSize = 1000;
       const all: Article[] = [];
       for (let from = 0; ; from += pageSize) {
@@ -53,6 +57,12 @@ export function useFilteredArticles() {
           .range(from, from + pageSize - 1);
         if (error || !data || data.length === 0) break;
         all.push(...(data as Article[]));
+        if (!mounted) return;
+        // Progressive update: show first batch immediately
+        if (from === 0) {
+          setArticles(all.slice());
+          setLoading(false);
+        }
         if (data.length < pageSize) break;
       }
       if (mounted) {
@@ -62,7 +72,7 @@ export function useFilteredArticles() {
     }
     load();
     const ch = supabase
-      .channel("articles-filtered")
+      .channel("articles-global")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "news_articles" },
@@ -75,9 +85,24 @@ export function useFilteredArticles() {
     };
   }, []);
 
-  const filtered = articles
-    .filter((a) => matchesDateFilter(a.published_at, startDate, endDate))
-    .filter((a) => (active ? evalExpression(active.expression, articleText(a)) : true));
+  const value = useMemo(() => ({ articles, loading }), [articles, loading]);
+  return <ArticlesContext.Provider value={value}>{children}</ArticlesContext.Provider>;
+}
+
+export function useFilteredArticles() {
+  const ctx = useContext(ArticlesContext);
+  const { active } = useActiveKeyword();
+  const { startDate, endDate } = useDateFilter();
+  const articles = ctx?.articles ?? [];
+  const loading = ctx?.loading ?? true;
+
+  const filtered = useMemo(
+    () =>
+      articles
+        .filter((a) => matchesDateFilter(a.published_at, startDate, endDate))
+        .filter((a) => (active ? evalExpression(active.expression, articleText(a)) : true)),
+    [articles, active, startDate, endDate],
+  );
 
   return { articles, filtered, loading, active };
 }
