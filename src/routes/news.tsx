@@ -54,6 +54,7 @@ function timeAgo(iso: string | null) {
 function Page() {
   const { isAuthenticated, user, loading: authLoading } = useAuth();
   const { active } = useActiveKeyword();
+  const { startDate, endDate } = useDateFilter();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | Sentiment>("all");
