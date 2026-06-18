@@ -121,6 +121,43 @@ function Page() {
     URL.revokeObjectURL(url);
   }
 
+  async function handleDownloadPdf() {
+    if (!report) return;
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 40;
+    const maxWidth = pageWidth - margin * 2;
+    const tpl = templates.find((t) => t.id === templateId) ?? templates[0];
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text("Laporan TOC Sat Bantek", margin, margin);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(
+      `${tpl.name} • ${new Date().toLocaleString("id-ID")}`,
+      margin,
+      margin + 16,
+    );
+
+    doc.setFontSize(10);
+    const lines = doc.splitTextToSize(report, maxWidth) as string[];
+    const lineHeight = 13;
+    let y = margin + 40;
+    for (const line of lines) {
+      if (y > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(line, margin, y);
+      y += lineHeight;
+    }
+
+    doc.save(`laporan-toc-sat-bantek-${new Date().toISOString().slice(0, 10)}.pdf`);
+  }
+
   const wahatsappUrl = report ? `https://wa.me/?text=${encodeURIComponent(report)}` : "#";
 
   return (
