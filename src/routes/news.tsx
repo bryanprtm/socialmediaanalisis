@@ -58,6 +58,8 @@ function Page() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | Sentiment>("all");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 6;
   const [form, setForm] = useState(empty);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -247,6 +249,14 @@ function Page() {
         : true,
     );
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filter, active?.id, startDate, endDate]);
+
   const counts = {
     total: filtered.length,
     positive: filtered.filter((a) => a.sentiment === "positive").length,
@@ -323,9 +333,10 @@ function Page() {
               </p>
             </div>
           ) : (
+            <>
             <div className="max-h-[500px] overflow-y-auto pr-2">
               <ul className="divide-y divide-border">
-              {filtered.map((a) => {
+              {pageItems.map((a) => {
                 const isEditing = editingId === a.id;
                 if (isEditing) {
                   return (
@@ -438,6 +449,33 @@ function Page() {
               })}
             </ul>
             </div>
+            {totalPages > 1 && (
+              <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Menampilkan {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} dari {filtered.length}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage <= 1}
+                    className="rounded-md border border-border bg-panel px-2.5 py-1 font-mono text-[10px] text-muted-foreground transition hover:border-primary/40 hover:text-primary disabled:pointer-events-none disabled:opacity-40"
+                  >
+                    ← Sebelumnya
+                  </button>
+                  <span className="font-mono text-[10px] text-foreground">
+                    {currentPage} / {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage >= totalPages}
+                    className="rounded-md border border-border bg-panel px-2.5 py-1 font-mono text-[10px] text-muted-foreground transition hover:border-primary/40 hover:text-primary disabled:pointer-events-none disabled:opacity-40"
+                  >
+                    Selanjutnya →
+                  </button>
+                </div>
+              </div>
+            )}
+            </>
           )}
         </Panel>
 
