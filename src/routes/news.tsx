@@ -58,6 +58,8 @@ function Page() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | Sentiment>("all");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 6;
   const [form, setForm] = useState(empty);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
