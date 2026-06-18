@@ -75,9 +75,9 @@ export function useFilteredArticles() {
     };
   }, []);
 
-  const filtered = active
-    ? articles.filter((a) => evalExpression(active.expression, articleText(a)))
-    : articles;
+  const filtered = articles
+    .filter((a) => matchesDateFilter(a.published_at, startDate, endDate))
+    .filter((a) => (active ? evalExpression(active.expression, articleText(a)) : true));
 
   return { articles, filtered, loading, active };
 }
