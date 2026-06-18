@@ -35,6 +35,7 @@ function articleText(a: Article) {
 
 export function useFilteredArticles() {
   const { active } = useActiveKeyword();
+  const { startDate, endDate } = useDateFilter();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
 
