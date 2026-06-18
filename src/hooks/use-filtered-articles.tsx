@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveKeyword } from "@/hooks/use-active-keyword";
+import { useDateFilter, matchesDateFilter } from "@/hooks/use-date-filter";
 import { evalExpression } from "@/lib/keyword-query";
 
 export type Sentiment = "positive" | "negative" | "neutral";
