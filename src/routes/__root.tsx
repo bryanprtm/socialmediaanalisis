@@ -97,9 +97,11 @@ function RootComponent() {
 
   return (
     <ActiveKeywordProvider>
-      <ArticleDialogProvider>
-        <Outlet />
-      </ArticleDialogProvider>
+      <DateFilterProvider>
+        <ArticleDialogProvider>
+          <Outlet />
+        </ArticleDialogProvider>
+      </DateFilterProvider>
     </ActiveKeywordProvider>
   );
 }
