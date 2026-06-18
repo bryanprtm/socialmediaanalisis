@@ -333,9 +333,10 @@ function Page() {
               </p>
             </div>
           ) : (
+            <>
             <div className="max-h-[500px] overflow-y-auto pr-2">
               <ul className="divide-y divide-border">
-              {filtered.map((a) => {
+              {pageItems.map((a) => {
                 const isEditing = editingId === a.id;
                 if (isEditing) {
                   return (
