@@ -6,6 +6,7 @@ import { Database, FileText, Globe, RefreshCw, ExternalLink, Plus, AlertCircle, 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveKeyword } from "@/hooks/use-active-keyword";
+import { useDateFilter, matchesDateFilter } from "@/hooks/use-date-filter";
 import { evalExpression } from "@/lib/keyword-query";
 import { toast } from "sonner";
 import { syncAllRssFeeds } from "@/lib/rss-sync.functions";
@@ -53,6 +54,7 @@ function timeAgo(iso: string | null) {
 function Page() {
   const { isAuthenticated, user, loading: authLoading } = useAuth();
   const { active } = useActiveKeyword();
+  const { startDate, endDate } = useDateFilter();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | Sentiment>("all");
@@ -234,14 +236,16 @@ function Page() {
     toast.success("Berita dihapus");
   }
 
-  const filtered = active
-    ? articles.filter((a) =>
-        evalExpression(
-          active.expression,
-          [a.title, a.excerpt ?? "", a.source, a.category ?? "", (a.keywords ?? []).join(" ")].join(" "),
-        ),
-      )
-    : articles;
+  const filtered = articles
+    .filter((a) => matchesDateFilter(a.published_at, startDate, endDate))
+    .filter((a) =>
+      active
+        ? evalExpression(
+            active.expression,
+            [a.title, a.excerpt ?? "", a.source, a.category ?? "", (a.keywords ?? []).join(" ")].join(" "),
+          )
+        : true,
+    );
 
   const counts = {
     total: filtered.length,
