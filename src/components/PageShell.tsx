@@ -19,7 +19,6 @@ export function PageShell({
   children: ReactNode;
 }) {
   const { active, setActiveId } = useActiveKeyword();
-  const { isActive: dateActive } = useDateFilter();
   return (
     <div className="min-h-screen bg-background">
       <TopNav />
