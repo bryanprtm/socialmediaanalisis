@@ -1,6 +1,7 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts, useLocation, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { ActiveKeywordProvider } from "@/hooks/use-active-keyword";
+import { DateFilterProvider } from "@/hooks/use-date-filter";
 import { ArticleDialogProvider } from "@/components/ArticleDialog";
 
 import appCss from "../styles.css?url";
@@ -96,9 +97,11 @@ function RootComponent() {
 
   return (
     <ActiveKeywordProvider>
-      <ArticleDialogProvider>
-        <Outlet />
-      </ArticleDialogProvider>
+      <DateFilterProvider>
+        <ArticleDialogProvider>
+          <Outlet />
+        </ArticleDialogProvider>
+      </DateFilterProvider>
     </ActiveKeywordProvider>
   );
 }

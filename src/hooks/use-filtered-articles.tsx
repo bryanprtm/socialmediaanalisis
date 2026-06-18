@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveKeyword } from "@/hooks/use-active-keyword";
+import { useDateFilter, matchesDateFilter } from "@/hooks/use-date-filter";
 import { evalExpression } from "@/lib/keyword-query";
 
 export type Sentiment = "positive" | "negative" | "neutral";
@@ -34,6 +35,7 @@ function articleText(a: Article) {
 
 export function useFilteredArticles() {
   const { active } = useActiveKeyword();
+  const { startDate, endDate } = useDateFilter();
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -73,9 +75,9 @@ export function useFilteredArticles() {
     };
   }, []);
 
-  const filtered = active
-    ? articles.filter((a) => evalExpression(active.expression, articleText(a)))
-    : articles;
+  const filtered = articles
+    .filter((a) => matchesDateFilter(a.published_at, startDate, endDate))
+    .filter((a) => (active ? evalExpression(active.expression, articleText(a)) : true));
 
   return { articles, filtered, loading, active };
 }
