@@ -236,14 +236,16 @@ function Page() {
     toast.success("Berita dihapus");
   }
 
-  const filtered = active
-    ? articles.filter((a) =>
-        evalExpression(
-          active.expression,
-          [a.title, a.excerpt ?? "", a.source, a.category ?? "", (a.keywords ?? []).join(" ")].join(" "),
-        ),
-      )
-    : articles;
+  const filtered = articles
+    .filter((a) => matchesDateFilter(a.published_at, startDate, endDate))
+    .filter((a) =>
+      active
+        ? evalExpression(
+            active.expression,
+            [a.title, a.excerpt ?? "", a.source, a.category ?? "", (a.keywords ?? []).join(" ")].join(" "),
+          )
+        : true,
+    );
 
   const counts = {
     total: filtered.length,
