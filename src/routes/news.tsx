@@ -249,6 +249,14 @@ function Page() {
         : true,
     );
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filter, active?.id, startDate, endDate]);
+
   const counts = {
     total: filtered.length,
     positive: filtered.filter((a) => a.sentiment === "positive").length,
