@@ -1,7 +1,6 @@
 import { type ReactNode } from "react";
 import { TopNav } from "./TopNav";
 import { useActiveKeyword } from "@/hooks/use-active-keyword";
-import { useDateFilter } from "@/hooks/use-date-filter";
 import { DateFilterBar } from "@/components/DateFilterBar";
 import { Sparkles, X } from "lucide-react";
 
