@@ -6,6 +6,7 @@ import { Database, FileText, Globe, RefreshCw, ExternalLink, Plus, AlertCircle, 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useActiveKeyword } from "@/hooks/use-active-keyword";
+import { useDateFilter, matchesDateFilter } from "@/hooks/use-date-filter";
 import { evalExpression } from "@/lib/keyword-query";
 import { toast } from "sonner";
 import { syncAllRssFeeds } from "@/lib/rss-sync.functions";
