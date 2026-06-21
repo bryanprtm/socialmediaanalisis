@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { generateWhatsAppReport } from "@/lib/whatsapp-report.functions";
+import { generatePosterBackground } from "@/lib/poster-image.functions";
 
 
 export const Route = createFileRoute("/export")({
