@@ -91,8 +91,9 @@ export function KeywordIntelligence({
   const dialog = useArticleDialog();
 
   const data = useMemo(() => {
-    const today = dayBucket(new Date());
-    const yesterday = today - 86400000;
+    const now = Date.now();
+    const last24Start = now - 86400000;          // 24 jam terakhir
+    const prev24Start = now - 2 * 86400000;      // 24-48 jam lalu
     const map = new Map<string, Article[]>();
     for (const a of articles) {
       const seen = new Set<string>();
@@ -113,12 +114,17 @@ export function KeywordIntelligence({
       const neg = items.filter((a) => a.sentiment === "negative").length;
       const neu = items.filter((a) => a.sentiment === "neutral").length;
       const pctOf = (n: number) => (count ? Math.round((n / count) * 100) : 0);
-      const todayCount = items.filter(
-        (a) => a.published_at && dayBucket(new Date(a.published_at)) === today,
-      ).length;
-      const yCount = items.filter(
-        (a) => a.published_at && dayBucket(new Date(a.published_at)) === yesterday,
-      ).length;
+      // Rolling 24h vs previous 24h (lebih stabil daripada hari kalender)
+      const todayCount = items.filter((a) => {
+        if (!a.published_at) return false;
+        const t = new Date(a.published_at).getTime();
+        return t >= last24Start && t <= now;
+      }).length;
+      const yCount = items.filter((a) => {
+        if (!a.published_at) return false;
+        const t = new Date(a.published_at).getTime();
+        return t >= prev24Start && t < last24Start;
+      }).length;
       const growthPct =
         yCount === 0
           ? todayCount > 0
@@ -160,10 +166,16 @@ export function KeywordIntelligence({
 
     const topRows = allRows.slice(0, limit);
 
-    const trending = [...allRows]
+    // Trending: prioritas growth positif; fallback ke top mention 24 jam terakhir
+    const positiveGrowth = allRows
       .filter((r) => r.todayCount >= 2 && r.growthPct > 0)
-      .sort((a, b) => b.growthPct - a.growthPct)
-      .slice(0, 8);
+      .sort((a, b) => b.growthPct - a.growthPct);
+    const trending = positiveGrowth.length > 0
+      ? positiveGrowth.slice(0, 8)
+      : allRows
+          .filter((r) => r.todayCount >= 1)
+          .sort((a, b) => b.todayCount - a.todayCount)
+          .slice(0, 8);
 
     const alerts = allRows.filter((r) =>
       SENSITIVE.some((s) => r.name.includes(s)),
