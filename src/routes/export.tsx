@@ -38,6 +38,103 @@ const templates = [
   { id: "custom", name: "Custom Report", desc: "Konfigurasi sendiri rentang & seksi", icon: FileText, accent: "success" as const, time: "Variable", periode: "Kustom" },
 ];
 
+function formatNumber(n: number): string {
+  return new Intl.NumberFormat("id-ID").format(n);
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+}
+
+function drawLegend(ctx: CanvasRenderingContext2D, x: number, y: number, color: string, label: string, hint: string) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x + 7, y + 10, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "700 20px 'Helvetica Neue', Arial, sans-serif";
+  ctx.textBaseline = "top";
+  ctx.fillText(label, x + 24, y);
+  ctx.fillStyle = "#A8C0D6";
+  ctx.font = "500 16px 'Helvetica Neue', Arial, sans-serif";
+  ctx.fillText(hint, x + 24, y + 26);
+}
+
+function drawListPanel(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  title: string,
+  rows: { label: string; value: string }[],
+  C: { panel: string; panelEdge: string; gold: string; text: string; muted: string },
+) {
+  roundRect(ctx, x, y, w, h, 18);
+  ctx.fillStyle = C.panel;
+  ctx.fill();
+  ctx.strokeStyle = C.panelEdge;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Title accent
+  ctx.fillStyle = C.gold;
+  ctx.fillRect(x + 24, y + 24, 36, 4);
+  ctx.fillStyle = C.gold;
+  ctx.font = "700 18px 'Helvetica Neue', Arial, sans-serif";
+  ctx.textBaseline = "top";
+  ctx.fillText(title, x + 24, y + 40);
+
+  const rowY0 = y + 86;
+  const rowH = (h - 110) / Math.max(rows.length, 1);
+  rows.forEach((r, i) => {
+    const ry = rowY0 + i * rowH;
+    // index
+    ctx.fillStyle = C.muted;
+    ctx.font = "700 18px 'Helvetica Neue', Arial, sans-serif";
+    ctx.fillText(String(i + 1).padStart(2, "0"), x + 24, ry + 8);
+    // label (truncate)
+    ctx.fillStyle = C.text;
+    ctx.font = "600 22px 'Helvetica Neue', Arial, sans-serif";
+    const maxLabelW = w - 24 - 60 - 100;
+    const label = truncateText(ctx, r.label, maxLabelW);
+    ctx.fillText(label, x + 24 + 50, ry + 6);
+    // value right
+    ctx.fillStyle = C.gold;
+    ctx.font = "700 22px 'Helvetica Neue', Arial, sans-serif";
+    const vw = ctx.measureText(r.value).width;
+    ctx.fillText(r.value, x + w - 24 - vw, ry + 6);
+    // separator
+    if (i < rows.length - 1) {
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x + 24, ry + rowH - 2);
+      ctx.lineTo(x + w - 24, ry + rowH - 2);
+      ctx.stroke();
+    }
+  });
+}
+
+function truncateText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  let lo = 0;
+  let hi = text.length;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (ctx.measureText(text.slice(0, mid) + "…").width <= maxWidth) lo = mid;
+    else hi = mid - 1;
+  }
+  return text.slice(0, lo) + "…";
+}
+
 function Page() {
   const { filtered, active, loading } = useFilteredArticles();
   const s = summarize(filtered);
