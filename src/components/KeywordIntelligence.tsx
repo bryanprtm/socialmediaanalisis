@@ -388,6 +388,12 @@ export function KeywordIntelligence({
               );
             })}
           </div>
+          <AIPanelInsight
+            panel="Word Cloud Keyword"
+            data={{
+              keywords_terbesar: data.topRows.slice(0, 20).map((r) => `${r.name}(${r.count})`),
+            }}
+          />
         </Panel>
 
         {/* Trending */}
