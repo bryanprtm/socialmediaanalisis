@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useActiveKeyword } from "@/hooks/use-active-keyword";
 import { useDateFilter, matchesDateFilter } from "@/hooks/use-date-filter";
 import { evalExpression } from "@/lib/keyword-query";
+import { resolveArticleProvince } from "@/lib/province-detect";
 
 export type Sentiment = "positive" | "negative" | "neutral";
 export type Article = {
@@ -80,6 +81,7 @@ export function ArticlesProvider({ children }: { children: ReactNode }) {
         // Normalisasi: pastikan setiap artikel punya keywords (fallback dari judul)
         const normalized = (data as Article[]).map((a) => ({
           ...a,
+          region: resolveArticleProvince(a) ?? a.region,
           keywords: extractKeywords(a),
         }));
         all.push(...normalized);
