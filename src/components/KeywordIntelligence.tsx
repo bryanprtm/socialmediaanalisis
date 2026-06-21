@@ -25,6 +25,7 @@ import {
 import { Panel, Pill } from "@/components/PageShell";
 import type { Article } from "@/hooks/use-filtered-articles";
 import { useArticleDialog } from "@/components/ArticleDialog";
+import { AIPanelInsight } from "@/components/AIPanelInsight";
 
 const PALETTE = [
   "oklch(0.78 0.18 195)",
@@ -346,6 +347,21 @@ export function KeywordIntelligence({
             </tbody>
           </table>
         </div>
+        <AIPanelInsight
+          panel="Keyword Intelligence — Keyword Teratas"
+          data={{
+            total_mention: data.totalMentions,
+            top_keywords: data.topRows.slice(0, 15).map((r) => ({
+              keyword: r.name,
+              mention: r.count,
+              persen: r.pct,
+              positif_pct: r.posPct,
+              negatif_pct: r.negPct,
+              netral_pct: r.neuPct,
+              delta_24h_pct: r.growthPct,
+            })),
+          }}
+        />
       </Panel>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -372,6 +388,12 @@ export function KeywordIntelligence({
               );
             })}
           </div>
+          <AIPanelInsight
+            panel="Word Cloud Keyword"
+            data={{
+              keywords_terbesar: data.topRows.slice(0, 20).map((r) => `${r.name}(${r.count})`),
+            }}
+          />
         </Panel>
 
         {/* Trending */}
@@ -401,6 +423,17 @@ export function KeywordIntelligence({
               ))}
             </ul>
           )}
+          <AIPanelInsight
+            panel="Trending Keyword 24 Jam"
+            data={{
+              trending: data.trending.map((r) => ({
+                keyword: r.name,
+                hari_ini: r.todayCount,
+                kemarin: r.yCount,
+                pertumbuhan_pct: r.growthPct,
+              })),
+            }}
+          />
         </Panel>
       </div>
 
@@ -424,6 +457,10 @@ export function KeywordIntelligence({
               ))}
             </ul>
           )}
+          <AIPanelInsight
+            panel="Keyword Teratas per Sumber"
+            data={{ per_sumber: data.perSource.map((s) => ({ sumber: s.source, keyword: s.kw, mention: s.count })) }}
+          />
         </Panel>
 
         {/* Per-region */}
@@ -445,6 +482,10 @@ export function KeywordIntelligence({
               ))}
             </ul>
           )}
+          <AIPanelInsight
+            panel="Keyword Teratas per Wilayah"
+            data={{ per_wilayah: data.perRegion.map((s) => ({ wilayah: s.region, keyword: s.kw, mention: s.count })) }}
+          />
         </Panel>
       </div>
 

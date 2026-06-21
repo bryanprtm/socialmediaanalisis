@@ -6,6 +6,7 @@ import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { AINarrative } from "@/components/AINarrative";
 import { CategoryDistribution } from "@/components/CategoryDistribution";
 import { KeywordIntelligence } from "@/components/KeywordIntelligence";
+import { AIPanelInsight } from "@/components/AIPanelInsight";
 
 export const Route = createFileRoute("/trends")({
   head: () => ({
@@ -78,6 +79,10 @@ function TrendsPage() {
               ))}
             </ul>
           )}
+          <AIPanelInsight
+            panel="Topik Trending"
+            data={{ topik_trending: trending.map((k) => ({ topik: k.name, mention: k.count })) }}
+          />
         </Panel>
 
         <Panel className="lg:col-span-2" title="Evolusi Kategori (7 Hari)" icon={<Activity className="h-4 w-4" />}>
