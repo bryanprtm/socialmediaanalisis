@@ -6,6 +6,7 @@ import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { AINarrative } from "@/components/AINarrative";
 import { CategoryDistribution } from "@/components/CategoryDistribution";
 import { KeywordIntelligence } from "@/components/KeywordIntelligence";
+import { AIPanelInsight } from "@/components/AIPanelInsight";
 
 export const Route = createFileRoute("/trends")({
   head: () => ({
