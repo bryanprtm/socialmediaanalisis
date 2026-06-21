@@ -482,6 +482,10 @@ export function KeywordIntelligence({
               ))}
             </ul>
           )}
+          <AIPanelInsight
+            panel="Keyword Teratas per Wilayah"
+            data={{ per_wilayah: data.perRegion.map((s) => ({ wilayah: s.region, keyword: s.kw, mention: s.count })) }}
+          />
         </Panel>
       </div>
 
