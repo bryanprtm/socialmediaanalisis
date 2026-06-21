@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { generateWhatsAppReport } from "@/lib/whatsapp-report.functions";
-import { generatePptStructure, type PptSlidesPayload } from "@/lib/ppt-report.functions";
+
 
 export const Route = createFileRoute("/export")({
   head: () => ({
@@ -38,15 +38,111 @@ const templates = [
   { id: "custom", name: "Custom Report", desc: "Konfigurasi sendiri rentang & seksi", icon: FileText, accent: "success" as const, time: "Variable", periode: "Kustom" },
 ];
 
+function formatNumber(n: number): string {
+  return new Intl.NumberFormat("id-ID").format(n);
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+}
+
+function drawLegend(ctx: CanvasRenderingContext2D, x: number, y: number, color: string, label: string, hint: string) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x + 7, y + 10, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "700 20px 'Helvetica Neue', Arial, sans-serif";
+  ctx.textBaseline = "top";
+  ctx.fillText(label, x + 24, y);
+  ctx.fillStyle = "#A8C0D6";
+  ctx.font = "500 16px 'Helvetica Neue', Arial, sans-serif";
+  ctx.fillText(hint, x + 24, y + 26);
+}
+
+function drawListPanel(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  title: string,
+  rows: { label: string; value: string }[],
+  C: { panel: string; panelEdge: string; gold: string; text: string; muted: string },
+) {
+  roundRect(ctx, x, y, w, h, 18);
+  ctx.fillStyle = C.panel;
+  ctx.fill();
+  ctx.strokeStyle = C.panelEdge;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Title accent
+  ctx.fillStyle = C.gold;
+  ctx.fillRect(x + 24, y + 24, 36, 4);
+  ctx.fillStyle = C.gold;
+  ctx.font = "700 18px 'Helvetica Neue', Arial, sans-serif";
+  ctx.textBaseline = "top";
+  ctx.fillText(title, x + 24, y + 40);
+
+  const rowY0 = y + 86;
+  const rowH = (h - 110) / Math.max(rows.length, 1);
+  rows.forEach((r, i) => {
+    const ry = rowY0 + i * rowH;
+    // index
+    ctx.fillStyle = C.muted;
+    ctx.font = "700 18px 'Helvetica Neue', Arial, sans-serif";
+    ctx.fillText(String(i + 1).padStart(2, "0"), x + 24, ry + 8);
+    // label (truncate)
+    ctx.fillStyle = C.text;
+    ctx.font = "600 22px 'Helvetica Neue', Arial, sans-serif";
+    const maxLabelW = w - 24 - 60 - 100;
+    const label = truncateText(ctx, r.label, maxLabelW);
+    ctx.fillText(label, x + 24 + 50, ry + 6);
+    // value right
+    ctx.fillStyle = C.gold;
+    ctx.font = "700 22px 'Helvetica Neue', Arial, sans-serif";
+    const vw = ctx.measureText(r.value).width;
+    ctx.fillText(r.value, x + w - 24 - vw, ry + 6);
+    // separator
+    if (i < rows.length - 1) {
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x + 24, ry + rowH - 2);
+      ctx.lineTo(x + w - 24, ry + rowH - 2);
+      ctx.stroke();
+    }
+  });
+}
+
+function truncateText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  let lo = 0;
+  let hi = text.length;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (ctx.measureText(text.slice(0, mid) + "…").width <= maxWidth) lo = mid;
+    else hi = mid - 1;
+  }
+  return text.slice(0, lo) + "…";
+}
+
 function Page() {
   const { filtered, active, loading } = useFilteredArticles();
   const s = summarize(filtered);
   const genFn = useServerFn(generateWhatsAppReport);
-  const pptFn = useServerFn(generatePptStructure);
   const [templateId, setTemplateId] = useState<string>("daily");
   const [report, setReport] = useState<string>("");
   const [generating, setGenerating] = useState(false);
-  const [generatingPpt, setGeneratingPpt] = useState(false);
+  const [generatingPoster, setGeneratingPoster] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -290,223 +386,202 @@ function Page() {
     doc.save(`laporan-toc-sat-bantek-${new Date().toISOString().slice(0, 10)}.pdf`);
   }
 
-  async function handleDownloadPpt() {
+  async function handleDownloadPoster() {
     if (!report) return;
-    setGeneratingPpt(true);
+    setGeneratingPoster(true);
     setError(null);
     try {
       const tpl = templates.find((t) => t.id === templateId) ?? templates[0];
-      const structure: PptSlidesPayload = await pptFn({
-        data: {
-          report,
-          periode: tpl.periode,
-          templateName: tpl.name,
-          filterAktif: active?.name ?? null,
-          total: s.total,
-          pctPos: s.pctPos,
-          pctNeg: s.pctNeg,
-          pctNeu: s.pctNeu,
-          topKeywords: s.keywords.slice(0, 10),
-          topSources: s.sources.slice(0, 10),
-          topCategories: s.categories.slice(0, 10),
-          topRegions: s.regions.slice(0, 10),
-        },
-      });
-      await renderPptx(structure, tpl.name);
+      await renderPosterImage(tpl.name, tpl.periode);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal membuat PPT");
+      setError(e instanceof Error ? e.message : "Gagal membuat poster");
     } finally {
-      setGeneratingPpt(false);
+      setGeneratingPoster(false);
     }
   }
 
-  async function renderPptx(payload: PptSlidesPayload, templateName: string) {
-    const PptxGenJS = (await import("pptxgenjs")).default;
-    const pres = new PptxGenJS();
-    pres.layout = "LAYOUT_WIDE"; // 13.333 x 7.5 in
-    pres.title = `Laporan Intelijen Media - ${templateName}`;
-    pres.company = "TOC Sat Bantek";
+  async function renderPosterImage(templateName: string, periode: string) {
+    const W = 1080;
+    const H = 1440;
+    const canvas = document.createElement("canvas");
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas tidak tersedia");
 
-    const t = payload.theme;
-    const W = 13.333;
-    const H = 7.5;
-    const tanggal = new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
-
-    const addHeaderBar = (slide: ReturnType<typeof pres.addSlide>) => {
-      slide.background = { color: t.background };
-      // top accent bar
-      slide.addShape(pres.ShapeType.rect, { x: 0, y: 0, w: W, h: 0.35, fill: { color: t.primary }, line: { color: t.primary } });
-      slide.addShape(pres.ShapeType.rect, { x: 0, y: 0.35, w: W, h: 0.06, fill: { color: t.accent }, line: { color: t.accent } });
-      // footer
-      slide.addShape(pres.ShapeType.rect, { x: 0, y: H - 0.35, w: W, h: 0.35, fill: { color: t.primary }, line: { color: t.primary } });
-      slide.addText("TOC Sat Bantek  ·  Laporan Intelijen Media", {
-        x: 0.4, y: H - 0.33, w: 9, h: 0.3,
-        fontFace: t.fontBody, fontSize: 9, color: "FFFFFF", valign: "middle",
-      });
-      slide.addText(tanggal, {
-        x: W - 4.4, y: H - 0.33, w: 4, h: 0.3,
-        fontFace: t.fontBody, fontSize: 9, color: "FFFFFF", align: "right", valign: "middle",
-      });
+    // Palet profesional
+    const C = {
+      bg: "#0B1B2B",
+      bgSoft: "#102739",
+      panel: "#16324A",
+      panelEdge: "#1F4767",
+      gold: "#D4AF37",
+      goldSoft: "#E8C766",
+      text: "#FFFFFF",
+      muted: "#A8C0D6",
+      pos: "#3FBF7F",
+      neu: "#7A93AC",
+      neg: "#E5575C",
     };
 
-    payload.slides.forEach((sl, idx) => {
-      const slide = pres.addSlide();
+    // ===== Background gradient =====
+    const grd = ctx.createLinearGradient(0, 0, 0, H);
+    grd.addColorStop(0, C.bg);
+    grd.addColorStop(1, "#081522");
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
 
-      if (sl.type === "cover") {
-        slide.background = { color: t.primary };
-        // accent stripe
-        slide.addShape(pres.ShapeType.rect, { x: 0, y: H - 1.6, w: W, h: 0.08, fill: { color: t.accent }, line: { color: t.accent } });
-        slide.addText("LAPORAN INTELIJEN MEDIA", {
-          x: 0.7, y: 1.4, w: W - 1.4, h: 0.6,
-          fontFace: t.fontBody, fontSize: 14, color: t.accent, bold: true, charSpacing: 6,
-        });
-        slide.addText(sl.title, {
-          x: 0.7, y: 2.1, w: W - 1.4, h: 2.2,
-          fontFace: t.fontHeading, fontSize: 54, color: "FFFFFF", bold: true,
-        });
-        if (sl.subtitle) {
-          slide.addText(sl.subtitle, {
-            x: 0.7, y: 4.4, w: W - 1.4, h: 1,
-            fontFace: t.fontBody, fontSize: 20, color: "FFFFFF",
-          });
-        }
-        slide.addText(`${templateName}  ·  ${tanggal}`, {
-          x: 0.7, y: H - 1.2, w: W - 1.4, h: 0.5,
-          fontFace: t.fontBody, fontSize: 12, color: "FFFFFF",
-        });
-        if (sl.footnote) {
-          slide.addText(sl.footnote, {
-            x: 0.7, y: H - 0.7, w: W - 1.4, h: 0.4,
-            fontFace: t.fontBody, fontSize: 10, color: t.accent,
-          });
-        }
-        return;
-      }
+    // Subtle radial glow
+    const glow = ctx.createRadialGradient(W * 0.8, 200, 50, W * 0.8, 200, 600);
+    glow.addColorStop(0, "rgba(212,175,55,0.18)");
+    glow.addColorStop(1, "rgba(212,175,55,0)");
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
 
-      addHeaderBar(slide);
+    // ===== Header bar =====
+    ctx.fillStyle = C.gold;
+    ctx.fillRect(0, 0, W, 8);
 
-      // Title block
-      slide.addText(sl.title, {
-        x: 0.6, y: 0.7, w: W - 1.2, h: 0.9,
-        fontFace: t.fontHeading, fontSize: 32, color: t.primary, bold: true,
-      });
-      slide.addShape(pres.ShapeType.rect, { x: 0.6, y: 1.55, w: 1.2, h: 0.06, fill: { color: t.accent }, line: { color: t.accent } });
+    // ===== Eyebrow =====
+    ctx.fillStyle = C.gold;
+    ctx.font = "600 22px 'Helvetica Neue', Arial, sans-serif";
+    ctx.textBaseline = "top";
+    ctx.fillText("LAPORAN INTELIJEN MEDIA", 64, 60);
 
-      if (sl.subtitle) {
-        slide.addText(sl.subtitle, {
-          x: 0.6, y: 1.7, w: W - 1.2, h: 0.5,
-          fontFace: t.fontBody, fontSize: 16, color: t.muted, italic: true,
-        });
-      }
+    // ===== Title =====
+    ctx.fillStyle = C.text;
+    ctx.font = "800 64px 'Helvetica Neue', Arial, sans-serif";
+    ctx.fillText("TOC Sat Bantek", 64, 100);
 
-      const bodyY = sl.subtitle ? 2.4 : 1.9;
+    ctx.fillStyle = C.muted;
+    ctx.font = "400 26px 'Helvetica Neue', Arial, sans-serif";
+    ctx.fillText("Media Monitoring & Sentiment Analysis", 64, 180);
 
-      if (sl.type === "section") {
-        slide.addText(sl.title, {
-          x: 0.6, y: H / 2 - 0.8, w: W - 1.2, h: 1.6,
-          fontFace: t.fontHeading, fontSize: 44, color: t.primary, bold: true, align: "center", valign: "middle",
-        });
-        if (sl.subtitle) {
-          slide.addText(sl.subtitle, {
-            x: 0.6, y: H / 2 + 0.8, w: W - 1.2, h: 0.8,
-            fontFace: t.fontBody, fontSize: 18, color: t.muted, align: "center",
-          });
-        }
-      } else if (sl.type === "stat" && sl.stats && sl.stats.length > 0) {
-        const stats = sl.stats.slice(0, 4);
-        const gap = 0.3;
-        const totalW = W - 1.2;
-        const cardW = (totalW - gap * (stats.length - 1)) / stats.length;
-        const cardH = 2.6;
-        const cardY = bodyY + 0.3;
-        stats.forEach((st, i) => {
-          const x = 0.6 + i * (cardW + gap);
-          slide.addShape(pres.ShapeType.roundRect, {
-            x, y: cardY, w: cardW, h: cardH,
-            fill: { color: t.secondary }, line: { color: t.secondary }, rectRadius: 0.12,
-          });
-          slide.addShape(pres.ShapeType.rect, {
-            x, y: cardY, w: cardW, h: 0.08, fill: { color: t.accent }, line: { color: t.accent },
-          });
-          slide.addText(st.value, {
-            x: x + 0.2, y: cardY + 0.4, w: cardW - 0.4, h: 1.2,
-            fontFace: t.fontHeading, fontSize: 44, color: t.primary, bold: true, align: "center", valign: "middle",
-          });
-          slide.addText(st.label, {
-            x: x + 0.2, y: cardY + 1.6, w: cardW - 0.4, h: 0.5,
-            fontFace: t.fontBody, fontSize: 13, color: t.text, align: "center", bold: true,
-          });
-          if (st.hint) {
-            slide.addText(st.hint, {
-              x: x + 0.2, y: cardY + 2.0, w: cardW - 0.4, h: 0.5,
-              fontFace: t.fontBody, fontSize: 10, color: t.muted, align: "center",
-            });
-          }
-        });
-      } else if (sl.type === "two-column") {
-        const colW = (W - 1.6) / 2;
-        const colH = H - bodyY - 0.8;
-        // left
-        slide.addShape(pres.ShapeType.roundRect, {
-          x: 0.6, y: bodyY, w: colW, h: colH,
-          fill: { color: t.secondary }, line: { color: t.secondary }, rectRadius: 0.1,
-        });
-        slide.addText(sl.leftTitle ?? "", {
-          x: 0.85, y: bodyY + 0.25, w: colW - 0.5, h: 0.6,
-          fontFace: t.fontHeading, fontSize: 18, color: t.primary, bold: true,
-        });
-        slide.addText(
-          (sl.leftBullets ?? []).map((b) => ({ text: b, options: { bullet: { code: "25A0" }, color: t.text } })),
-          { x: 0.85, y: bodyY + 0.95, w: colW - 0.5, h: colH - 1.2, fontFace: t.fontBody, fontSize: 13, color: t.text, paraSpaceAfter: 6, valign: "top" },
-        );
-        // right
-        const rx = 0.6 + colW + 0.4;
-        slide.addShape(pres.ShapeType.roundRect, {
-          x: rx, y: bodyY, w: colW, h: colH,
-          fill: { color: t.primary }, line: { color: t.primary }, rectRadius: 0.1,
-        });
-        slide.addText(sl.rightTitle ?? "", {
-          x: rx + 0.25, y: bodyY + 0.25, w: colW - 0.5, h: 0.6,
-          fontFace: t.fontHeading, fontSize: 18, color: "FFFFFF", bold: true,
-        });
-        slide.addText(
-          (sl.rightBullets ?? []).map((b) => ({ text: b, options: { bullet: { code: "25A0" }, color: "FFFFFF" } })),
-          { x: rx + 0.25, y: bodyY + 0.95, w: colW - 0.5, h: colH - 1.2, fontFace: t.fontBody, fontSize: 13, color: "FFFFFF", paraSpaceAfter: 6, valign: "top" },
-        );
-      } else if (sl.type === "closing") {
-        slide.addText(sl.subtitle ?? "", {
-          x: 0.6, y: bodyY, w: W - 1.2, h: 0.6,
-          fontFace: t.fontBody, fontSize: 16, color: t.muted, italic: true,
-        });
-        const bullets = sl.bullets ?? [];
-        slide.addText(
-          bullets.map((b) => ({ text: b, options: { bullet: { code: "2713" }, color: t.primary, bold: true } })),
-          {
-            x: 0.6, y: bodyY + 0.8, w: W - 1.2, h: H - bodyY - 1.6,
-            fontFace: t.fontBody, fontSize: 16, color: t.text, paraSpaceAfter: 10, valign: "top",
-          },
-        );
-      } else {
-        // bullets default
-        const bullets = sl.bullets ?? [];
-        slide.addText(
-          bullets.map((b) => ({ text: b, options: { bullet: { code: "25A0" }, color: t.accent } })),
-          {
-            x: 0.6, y: bodyY, w: W - 1.2, h: H - bodyY - 0.8,
-            fontFace: t.fontBody, fontSize: 18, color: t.text, paraSpaceAfter: 10, valign: "top",
-          },
-        );
-      }
+    // Meta line
+    const tanggal = new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
+    ctx.fillStyle = C.goldSoft;
+    ctx.font = "600 20px 'Helvetica Neue', Arial, sans-serif";
+    ctx.fillText(`${templateName.toUpperCase()}  ·  ${periode.toUpperCase()}  ·  ${tanggal.toUpperCase()}`, 64, 230);
 
-      // slide number
-      slide.addText(`${idx + 1} / ${payload.slides.length}`, {
-        x: W - 1.6, y: 0.55, w: 1.2, h: 0.3,
-        fontFace: t.fontBody, fontSize: 10, color: t.muted, align: "right",
-      });
-    });
+    // Divider
+    ctx.strokeStyle = C.gold;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(64, 280);
+    ctx.lineTo(180, 280);
+    ctx.stroke();
 
-    await pres.writeFile({ fileName: `laporan-toc-sat-bantek-${new Date().toISOString().slice(0, 10)}.pptx` });
+    // ===== Hero metric: Total artikel =====
+    ctx.fillStyle = C.muted;
+    ctx.font = "500 22px 'Helvetica Neue', Arial, sans-serif";
+    ctx.fillText("TOTAL ARTIKEL DIPANTAU", 64, 310);
+
+    ctx.fillStyle = C.text;
+    ctx.font = "800 140px 'Helvetica Neue', Arial, sans-serif";
+    ctx.fillText(formatNumber(s.total), 64, 345);
+
+    // filter aktif badge
+    if (active) {
+      const badgeText = `Filter: ${active.name}`;
+      ctx.font = "600 18px 'Helvetica Neue', Arial, sans-serif";
+      const tw = ctx.measureText(badgeText).width;
+      const bx = 64;
+      const by = 510;
+      ctx.fillStyle = "rgba(212,175,55,0.15)";
+      roundRect(ctx, bx, by, tw + 32, 38, 8);
+      ctx.fill();
+      ctx.strokeStyle = C.gold;
+      ctx.lineWidth = 1;
+      roundRect(ctx, bx, by, tw + 32, 38, 8);
+      ctx.stroke();
+      ctx.fillStyle = C.gold;
+      ctx.fillText(badgeText, bx + 16, by + 10);
+    }
+
+    // ===== Sentiment bar =====
+    const barY = 580;
+    const barX = 64;
+    const barW = W - 128;
+    const barH = 28;
+    ctx.fillStyle = C.muted;
+    ctx.font = "500 22px 'Helvetica Neue', Arial, sans-serif";
+    ctx.fillText("DISTRIBUSI SENTIMEN", barX, barY - 38);
+
+    const total = Math.max(1, s.pos + s.neg + s.neu);
+    const wPos = (s.pos / total) * barW;
+    const wNeu = (s.neu / total) * barW;
+    const wNeg = (s.neg / total) * barW;
+
+    // bar bg
+    roundRect(ctx, barX, barY, barW, barH, 6);
+    ctx.fillStyle = C.panel;
+    ctx.fill();
+    // segments
+    ctx.save();
+    roundRect(ctx, barX, barY, barW, barH, 6);
+    ctx.clip();
+    ctx.fillStyle = C.pos;
+    ctx.fillRect(barX, barY, wPos, barH);
+    ctx.fillStyle = C.neu;
+    ctx.fillRect(barX + wPos, barY, wNeu, barH);
+    ctx.fillStyle = C.neg;
+    ctx.fillRect(barX + wPos + wNeu, barY, wNeg, barH);
+    ctx.restore();
+
+    // legends
+    const legY = barY + barH + 18;
+    drawLegend(ctx, barX, legY, C.pos, `Positif ${s.pctPos}%`, `${formatNumber(s.pos)} artikel`);
+    drawLegend(ctx, barX + (barW / 3), legY, C.neu, `Netral ${s.pctNeu}%`, `${formatNumber(s.neu)} artikel`);
+    drawLegend(ctx, barX + (barW * 2) / 3, legY, C.neg, `Negatif ${s.pctNeg}%`, `${formatNumber(s.neg)} artikel`);
+
+    // ===== Two-column lists =====
+    const listY = 790;
+    const listH = 470;
+    const colW = (W - 128 - 24) / 2;
+
+    drawListPanel(
+      ctx,
+      64,
+      listY,
+      colW,
+      listH,
+      "ISU & KATA KUNCI TERATAS",
+      s.keywords.slice(0, 6).map((k) => ({ label: k.name, value: formatNumber(k.count) })),
+      C,
+    );
+    drawListPanel(
+      ctx,
+      64 + colW + 24,
+      listY,
+      colW,
+      listH,
+      "SUMBER MEDIA TERATAS",
+      s.sources.slice(0, 6).map((k) => ({ label: k.name, value: formatNumber(k.count) })),
+      C,
+    );
+
+    // ===== Footer =====
+    ctx.fillStyle = C.gold;
+    ctx.fillRect(0, H - 6, W, 6);
+
+    ctx.fillStyle = C.muted;
+    ctx.font = "500 18px 'Helvetica Neue', Arial, sans-serif";
+    ctx.fillText("Dokumen Resmi (Internal) · TOC Sat Bantek", 64, H - 58);
+
+    ctx.fillStyle = C.goldSoft;
+    ctx.font = "600 18px 'Helvetica Neue', Arial, sans-serif";
+    const stamp = `Dicetak: ${new Date().toLocaleString("id-ID")}`;
+    const sw = ctx.measureText(stamp).width;
+    ctx.fillText(stamp, W - 64 - sw, H - 58);
+
+    // ===== Save =====
+    const url = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `poster-toc-sat-bantek-${new Date().toISOString().slice(0, 10)}.png`;
+    a.click();
   }
+
 
   const wahatsappUrl = report ? `https://wa.me/?text=${encodeURIComponent(report)}` : "#";
 
@@ -592,11 +667,11 @@ function Page() {
                 <Download className="h-3 w-3" /> .pdf
               </button>
               <button
-                onClick={handleDownloadPpt}
-                disabled={generatingPpt}
+                onClick={handleDownloadPoster}
+                disabled={generatingPoster}
                 className="inline-flex items-center gap-1.5 rounded-md border border-violet/40 bg-violet/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-violet hover:bg-violet/20 disabled:opacity-50"
               >
-                {generatingPpt ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />} .pptx (AI)
+                {generatingPoster ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />} Poster .png
               </button>
               <a href={wahatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md bg-success/15 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-success hover:bg-success/25">
                 <ExternalLink className="h-3 w-3" /> Buka WhatsApp
