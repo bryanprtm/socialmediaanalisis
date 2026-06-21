@@ -667,11 +667,11 @@ function Page() {
                 <Download className="h-3 w-3" /> .pdf
               </button>
               <button
-                onClick={handleDownloadPpt}
-                disabled={generatingPpt}
+                onClick={handleDownloadPoster}
+                disabled={generatingPoster}
                 className="inline-flex items-center gap-1.5 rounded-md border border-violet/40 bg-violet/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-violet hover:bg-violet/20 disabled:opacity-50"
               >
-                {generatingPpt ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />} .pptx (AI)
+                {generatingPoster ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />} Poster .png
               </button>
               <a href={wahatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-md bg-success/15 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-success hover:bg-success/25">
                 <ExternalLink className="h-3 w-3" /> Buka WhatsApp
