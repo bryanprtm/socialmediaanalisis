@@ -423,11 +423,18 @@ export function KeywordIntelligence({
               ))}
             </ul>
           )}
+          <AIPanelInsight
+            panel="Trending Keyword 24 Jam"
+            data={{
+              trending: data.trending.map((r) => ({
+                keyword: r.name,
+                hari_ini: r.todayCount,
+                kemarin: r.yCount,
+                pertumbuhan_pct: r.growthPct,
+              })),
+            }}
+          />
         </Panel>
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        {/* Per-source */}
         <Panel title="Keyword Teratas per Sumber" icon={<Newspaper className="h-4 w-4" />}>
           {data.perSource.length === 0 ? (
             <p className="py-6 text-center text-xs text-muted-foreground">Belum ada data sumber.</p>
