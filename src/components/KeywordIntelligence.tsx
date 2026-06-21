@@ -347,6 +347,21 @@ export function KeywordIntelligence({
             </tbody>
           </table>
         </div>
+        <AIPanelInsight
+          panel="Keyword Intelligence — Keyword Teratas"
+          data={{
+            total_mention: data.totalMentions,
+            top_keywords: data.topRows.slice(0, 15).map((r) => ({
+              keyword: r.name,
+              mention: r.count,
+              persen: r.pct,
+              positif_pct: r.posPct,
+              negatif_pct: r.negPct,
+              netral_pct: r.neuPct,
+              delta_24h_pct: r.growthPct,
+            })),
+          }}
+        />
       </Panel>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
