@@ -21,6 +21,27 @@ export type Article = {
   keywords: string[] | null;
 };
 
+// Indonesian + English stopwords (ringkas) — disaring saat ekstraksi keyword
+const STOPWORDS = new Set<string>([
+  "yang","untuk","dengan","dari","pada","akan","tidak","adalah","ini","itu","dan","atau","juga","sudah","saat","oleh","dalam","sebagai","karena","agar","bisa","masih","telah","para","saya","kami","mereka","anda","kita","ada","tak","tapi","bagi","kepada","tentang","setelah","sebelum","jadi","lagi","saja","pun","kah","lah","nya","dia","beliau","kalau","jika","maka","supaya","hanya","sangat","lebih","paling","semua","seluruh","setiap","masing","punya","milik","apa","siapa","kenapa","mengapa","bagaimana","dimana","kapan","ke","di","ya","yg","krn","dgn","utk","new","the","and","for","with","from","that","this","you","are","was","were","not","but","has","have","had","will","would","can","could","should","into","over","under","about","after","before","when","what","who","how","why","where",
+  "berita","news","update","terbaru","viral","resmi","kata","ucap","jelas","sebut","bilang","tegas","ungkap","sampai","mulai","tetap","bukan","atas","bawah","laki","perempuan","pria","wanita","orang","hari","tahun","bulan","kali","kasus","aksi","jadi","jam","wib","wita","tahun"
+]);
+
+function tokenize(text: string): string[] {
+  const words = text.toLowerCase().replace(/[^a-z0-9\s\u00C0-\u017F]/g, " ").split(/\s+/);
+  return words.filter((w) => w.length >= 4 && !STOPWORDS.has(w) && !/^\d+$/.test(w));
+}
+
+/** Ekstrak keyword: prioritas kolom keywords, fallback ke judul. */
+function extractKeywords(a: Article): string[] {
+  const base = (a.keywords ?? []).filter((k) => typeof k === "string" && k.trim().length > 0);
+  if (base.length > 0) return base.map((k) => k.toLowerCase().trim());
+  // Fallback: ekstrak dari judul (top kata signifikan)
+  const tokens = tokenize(a.title ?? "");
+  // Dedup, kembalikan max 6 token signifikan
+  return Array.from(new Set(tokens)).slice(0, 6);
+}
+
 function articleText(a: Article) {
   return [
     a.title,
@@ -29,7 +50,7 @@ function articleText(a: Article) {
     a.source,
     a.category ?? "",
     a.region ?? "",
-    (a.keywords ?? []).join(" "),
+    extractKeywords(a).join(" "),
   ].join(" ");
 }
 
