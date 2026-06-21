@@ -77,7 +77,12 @@ export function ArticlesProvider({ children }: { children: ReactNode }) {
           .order("published_at", { ascending: false })
           .range(from, from + pageSize - 1);
         if (error || !data || data.length === 0) break;
-        all.push(...(data as Article[]));
+        // Normalisasi: pastikan setiap artikel punya keywords (fallback dari judul)
+        const normalized = (data as Article[]).map((a) => ({
+          ...a,
+          keywords: extractKeywords(a),
+        }));
+        all.push(...normalized);
         if (!mounted) return;
         // Progressive update: show first batch immediately
         if (from === 0) {
