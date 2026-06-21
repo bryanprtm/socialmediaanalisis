@@ -290,6 +290,224 @@ function Page() {
     doc.save(`laporan-toc-sat-bantek-${new Date().toISOString().slice(0, 10)}.pdf`);
   }
 
+  async function handleDownloadPpt() {
+    if (!report) return;
+    setGeneratingPpt(true);
+    setError(null);
+    try {
+      const tpl = templates.find((t) => t.id === templateId) ?? templates[0];
+      const structure: PptSlidesPayload = await pptFn({
+        data: {
+          report,
+          periode: tpl.periode,
+          templateName: tpl.name,
+          filterAktif: active?.name ?? null,
+          total: s.total,
+          pctPos: s.pctPos,
+          pctNeg: s.pctNeg,
+          pctNeu: s.pctNeu,
+          topKeywords: s.keywords.slice(0, 10),
+          topSources: s.sources.slice(0, 10),
+          topCategories: s.categories.slice(0, 10),
+          topRegions: s.regions.slice(0, 10),
+        },
+      });
+      await renderPptx(structure, tpl.name);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Gagal membuat PPT");
+    } finally {
+      setGeneratingPpt(false);
+    }
+  }
+
+  async function renderPptx(payload: PptSlidesPayload, templateName: string) {
+    const PptxGenJS = (await import("pptxgenjs")).default;
+    const pres = new PptxGenJS();
+    pres.layout = "LAYOUT_WIDE"; // 13.333 x 7.5 in
+    pres.title = `Laporan Intelijen Media - ${templateName}`;
+    pres.company = "TOC Sat Bantek";
+
+    const t = payload.theme;
+    const W = 13.333;
+    const H = 7.5;
+    const tanggal = new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
+
+    const addHeaderBar = (slide: PptxGenJS.Slide) => {
+      slide.background = { color: t.background };
+      // top accent bar
+      slide.addShape(pres.ShapeType.rect, { x: 0, y: 0, w: W, h: 0.35, fill: { color: t.primary }, line: { color: t.primary } });
+      slide.addShape(pres.ShapeType.rect, { x: 0, y: 0.35, w: W, h: 0.06, fill: { color: t.accent }, line: { color: t.accent } });
+      // footer
+      slide.addShape(pres.ShapeType.rect, { x: 0, y: H - 0.35, w: W, h: 0.35, fill: { color: t.primary }, line: { color: t.primary } });
+      slide.addText("TOC Sat Bantek  ·  Laporan Intelijen Media", {
+        x: 0.4, y: H - 0.33, w: 9, h: 0.3,
+        fontFace: t.fontBody, fontSize: 9, color: "FFFFFF", valign: "middle",
+      });
+      slide.addText(tanggal, {
+        x: W - 4.4, y: H - 0.33, w: 4, h: 0.3,
+        fontFace: t.fontBody, fontSize: 9, color: "FFFFFF", align: "right", valign: "middle",
+      });
+    };
+
+    payload.slides.forEach((sl, idx) => {
+      const slide = pres.addSlide();
+
+      if (sl.type === "cover") {
+        slide.background = { color: t.primary };
+        // accent stripe
+        slide.addShape(pres.ShapeType.rect, { x: 0, y: H - 1.6, w: W, h: 0.08, fill: { color: t.accent }, line: { color: t.accent } });
+        slide.addText("LAPORAN INTELIJEN MEDIA", {
+          x: 0.7, y: 1.4, w: W - 1.4, h: 0.6,
+          fontFace: t.fontBody, fontSize: 14, color: t.accent, bold: true, charSpacing: 6,
+        });
+        slide.addText(sl.title, {
+          x: 0.7, y: 2.1, w: W - 1.4, h: 2.2,
+          fontFace: t.fontHeading, fontSize: 54, color: "FFFFFF", bold: true,
+        });
+        if (sl.subtitle) {
+          slide.addText(sl.subtitle, {
+            x: 0.7, y: 4.4, w: W - 1.4, h: 1,
+            fontFace: t.fontBody, fontSize: 20, color: "FFFFFF",
+          });
+        }
+        slide.addText(`${templateName}  ·  ${tanggal}`, {
+          x: 0.7, y: H - 1.2, w: W - 1.4, h: 0.5,
+          fontFace: t.fontBody, fontSize: 12, color: "FFFFFF",
+        });
+        if (sl.footnote) {
+          slide.addText(sl.footnote, {
+            x: 0.7, y: H - 0.7, w: W - 1.4, h: 0.4,
+            fontFace: t.fontBody, fontSize: 10, color: t.accent,
+          });
+        }
+        return;
+      }
+
+      addHeaderBar(slide);
+
+      // Title block
+      slide.addText(sl.title, {
+        x: 0.6, y: 0.7, w: W - 1.2, h: 0.9,
+        fontFace: t.fontHeading, fontSize: 32, color: t.primary, bold: true,
+      });
+      slide.addShape(pres.ShapeType.rect, { x: 0.6, y: 1.55, w: 1.2, h: 0.06, fill: { color: t.accent }, line: { color: t.accent } });
+
+      if (sl.subtitle) {
+        slide.addText(sl.subtitle, {
+          x: 0.6, y: 1.7, w: W - 1.2, h: 0.5,
+          fontFace: t.fontBody, fontSize: 16, color: t.muted, italic: true,
+        });
+      }
+
+      const bodyY = sl.subtitle ? 2.4 : 1.9;
+
+      if (sl.type === "section") {
+        slide.addText(sl.title, {
+          x: 0.6, y: H / 2 - 0.8, w: W - 1.2, h: 1.6,
+          fontFace: t.fontHeading, fontSize: 44, color: t.primary, bold: true, align: "center", valign: "middle",
+        });
+        if (sl.subtitle) {
+          slide.addText(sl.subtitle, {
+            x: 0.6, y: H / 2 + 0.8, w: W - 1.2, h: 0.8,
+            fontFace: t.fontBody, fontSize: 18, color: t.muted, align: "center",
+          });
+        }
+      } else if (sl.type === "stat" && sl.stats && sl.stats.length > 0) {
+        const stats = sl.stats.slice(0, 4);
+        const gap = 0.3;
+        const totalW = W - 1.2;
+        const cardW = (totalW - gap * (stats.length - 1)) / stats.length;
+        const cardH = 2.6;
+        const cardY = bodyY + 0.3;
+        stats.forEach((st, i) => {
+          const x = 0.6 + i * (cardW + gap);
+          slide.addShape(pres.ShapeType.roundRect, {
+            x, y: cardY, w: cardW, h: cardH,
+            fill: { color: t.secondary }, line: { color: t.secondary }, rectRadius: 0.12,
+          });
+          slide.addShape(pres.ShapeType.rect, {
+            x, y: cardY, w: cardW, h: 0.08, fill: { color: t.accent }, line: { color: t.accent },
+          });
+          slide.addText(st.value, {
+            x: x + 0.2, y: cardY + 0.4, w: cardW - 0.4, h: 1.2,
+            fontFace: t.fontHeading, fontSize: 44, color: t.primary, bold: true, align: "center", valign: "middle",
+          });
+          slide.addText(st.label, {
+            x: x + 0.2, y: cardY + 1.6, w: cardW - 0.4, h: 0.5,
+            fontFace: t.fontBody, fontSize: 13, color: t.text, align: "center", bold: true,
+          });
+          if (st.hint) {
+            slide.addText(st.hint, {
+              x: x + 0.2, y: cardY + 2.0, w: cardW - 0.4, h: 0.5,
+              fontFace: t.fontBody, fontSize: 10, color: t.muted, align: "center",
+            });
+          }
+        });
+      } else if (sl.type === "two-column") {
+        const colW = (W - 1.6) / 2;
+        const colH = H - bodyY - 0.8;
+        // left
+        slide.addShape(pres.ShapeType.roundRect, {
+          x: 0.6, y: bodyY, w: colW, h: colH,
+          fill: { color: t.secondary }, line: { color: t.secondary }, rectRadius: 0.1,
+        });
+        slide.addText(sl.leftTitle ?? "", {
+          x: 0.85, y: bodyY + 0.25, w: colW - 0.5, h: 0.6,
+          fontFace: t.fontHeading, fontSize: 18, color: t.primary, bold: true,
+        });
+        slide.addText(
+          (sl.leftBullets ?? []).map((b) => ({ text: b, options: { bullet: { code: "25A0" }, color: t.text } })),
+          { x: 0.85, y: bodyY + 0.95, w: colW - 0.5, h: colH - 1.2, fontFace: t.fontBody, fontSize: 13, color: t.text, paraSpaceAfter: 6, valign: "top" },
+        );
+        // right
+        const rx = 0.6 + colW + 0.4;
+        slide.addShape(pres.ShapeType.roundRect, {
+          x: rx, y: bodyY, w: colW, h: colH,
+          fill: { color: t.primary }, line: { color: t.primary }, rectRadius: 0.1,
+        });
+        slide.addText(sl.rightTitle ?? "", {
+          x: rx + 0.25, y: bodyY + 0.25, w: colW - 0.5, h: 0.6,
+          fontFace: t.fontHeading, fontSize: 18, color: "FFFFFF", bold: true,
+        });
+        slide.addText(
+          (sl.rightBullets ?? []).map((b) => ({ text: b, options: { bullet: { code: "25A0" }, color: "FFFFFF" } })),
+          { x: rx + 0.25, y: bodyY + 0.95, w: colW - 0.5, h: colH - 1.2, fontFace: t.fontBody, fontSize: 13, color: "FFFFFF", paraSpaceAfter: 6, valign: "top" },
+        );
+      } else if (sl.type === "closing") {
+        slide.addText(sl.subtitle ?? "", {
+          x: 0.6, y: bodyY, w: W - 1.2, h: 0.6,
+          fontFace: t.fontBody, fontSize: 16, color: t.muted, italic: true,
+        });
+        const bullets = sl.bullets ?? [];
+        slide.addText(
+          bullets.map((b) => ({ text: b, options: { bullet: { code: "2713" }, color: t.primary, bold: true } })),
+          {
+            x: 0.6, y: bodyY + 0.8, w: W - 1.2, h: H - bodyY - 1.6,
+            fontFace: t.fontBody, fontSize: 16, color: t.text, paraSpaceAfter: 10, valign: "top",
+          },
+        );
+      } else {
+        // bullets default
+        const bullets = sl.bullets ?? [];
+        slide.addText(
+          bullets.map((b) => ({ text: b, options: { bullet: { code: "25A0" }, color: t.accent } })),
+          {
+            x: 0.6, y: bodyY, w: W - 1.2, h: H - bodyY - 0.8,
+            fontFace: t.fontBody, fontSize: 18, color: t.text, paraSpaceAfter: 10, valign: "top",
+          },
+        );
+      }
+
+      // slide number
+      slide.addText(`${idx + 1} / ${payload.slides.length}`, {
+        x: W - 1.6, y: 0.55, w: 1.2, h: 0.3,
+        fontFace: t.fontBody, fontSize: 10, color: t.muted, align: "right",
+      });
+    });
+
+    await pres.writeFile({ fileName: `laporan-toc-sat-bantek-${new Date().toISOString().slice(0, 10)}.pptx` });
+  }
+
   const wahatsappUrl = report ? `https://wa.me/?text=${encodeURIComponent(report)}` : "#";
 
   return (
