@@ -332,7 +332,7 @@ function Page() {
     const H = 7.5;
     const tanggal = new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
 
-    const addHeaderBar = (slide: InstanceType<typeof PptxGenJS>["addSlide"] extends () => infer R ? R : never) => {
+    const addHeaderBar = (slide: ReturnType<typeof pres.addSlide>) => {
       slide.background = { color: t.background };
       // top accent bar
       slide.addShape(pres.ShapeType.rect, { x: 0, y: 0, w: W, h: 0.35, fill: { color: t.primary }, line: { color: t.primary } });
