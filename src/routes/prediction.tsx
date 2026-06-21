@@ -4,6 +4,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tool
 import { Activity, Brain, AlertTriangle, TrendingUp } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { AINarrative } from "@/components/AINarrative";
+import { AIPanelInsight } from "@/components/AIPanelInsight";
 
 export const Route = createFileRoute("/prediction")({
   head: () => ({ meta: [{ title: "Issue Prediction — TOC Sat Bantek" }, { name: "description", content: "Prediksi tren berdasarkan news database." }] }),
