@@ -42,11 +42,10 @@ function Page() {
   const { filtered, active, loading } = useFilteredArticles();
   const s = summarize(filtered);
   const genFn = useServerFn(generateWhatsAppReport);
-  const pptFn = useServerFn(generatePptStructure);
   const [templateId, setTemplateId] = useState<string>("daily");
   const [report, setReport] = useState<string>("");
   const [generating, setGenerating] = useState(false);
-  const [generatingPpt, setGeneratingPpt] = useState(false);
+  const [generatingPoster, setGeneratingPoster] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
