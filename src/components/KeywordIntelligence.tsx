@@ -25,6 +25,7 @@ import {
 import { Panel, Pill } from "@/components/PageShell";
 import type { Article } from "@/hooks/use-filtered-articles";
 import { useArticleDialog } from "@/components/ArticleDialog";
+import { AIPanelInsight } from "@/components/AIPanelInsight";
 
 const PALETTE = [
   "oklch(0.78 0.18 195)",
