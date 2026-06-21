@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useFilteredArticles, summarize } from "@/hooks/use-filtered-articles";
 import { generateWhatsAppReport } from "@/lib/whatsapp-report.functions";
+import { generatePosterBackground } from "@/lib/poster-image.functions";
 
 
 export const Route = createFileRoute("/export")({
@@ -139,6 +140,7 @@ function Page() {
   const { filtered, active, loading } = useFilteredArticles();
   const s = summarize(filtered);
   const genFn = useServerFn(generateWhatsAppReport);
+  const posterBgFn = useServerFn(generatePosterBackground);
   const [templateId, setTemplateId] = useState<string>("daily");
   const [report, setReport] = useState<string>("");
   const [generating, setGenerating] = useState(false);
@@ -424,19 +426,48 @@ function Page() {
       neg: "#E5575C",
     };
 
-    // ===== Background gradient =====
-    const grd = ctx.createLinearGradient(0, 0, 0, H);
-    grd.addColorStop(0, C.bg);
-    grd.addColorStop(1, "#081522");
-    ctx.fillStyle = grd;
-    ctx.fillRect(0, 0, W, H);
-
-    // Subtle radial glow
-    const glow = ctx.createRadialGradient(W * 0.8, 200, 50, W * 0.8, 200, 600);
-    glow.addColorStop(0, "rgba(212,175,55,0.18)");
-    glow.addColorStop(1, "rgba(212,175,55,0)");
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, W, H);
+    // ===== Background: OpenAI-generated professional artwork =====
+    try {
+      const bg = await posterBgFn({
+        data: {
+          templateName,
+          periode,
+          total: s.total,
+          pctPos: s.pctPos,
+          pctNeg: s.pctNeg,
+          pctNeu: s.pctNeu,
+          topKeywords: s.keywords.slice(0, 6).map((k) => k.name),
+        },
+      });
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = `data:image/png;base64,${bg.imageBase64}`;
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("Gagal memuat gambar AI"));
+      });
+      ctx.drawImage(img, 0, 0, W, H);
+      // Dark gradient overlay for legibility
+      const overlay = ctx.createLinearGradient(0, 0, 0, H);
+      overlay.addColorStop(0, "rgba(11,27,43,0.55)");
+      overlay.addColorStop(0.5, "rgba(11,27,43,0.35)");
+      overlay.addColorStop(1, "rgba(8,21,34,0.85)");
+      ctx.fillStyle = overlay;
+      ctx.fillRect(0, 0, W, H);
+    } catch (e) {
+      // Fallback: gradient background if AI generation fails
+      const grd = ctx.createLinearGradient(0, 0, 0, H);
+      grd.addColorStop(0, C.bg);
+      grd.addColorStop(1, "#081522");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, W, H);
+      const glow = ctx.createRadialGradient(W * 0.8, 200, 50, W * 0.8, 200, 600);
+      glow.addColorStop(0, "rgba(212,175,55,0.18)");
+      glow.addColorStop(1, "rgba(212,175,55,0)");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, W, H);
+      console.warn("Poster AI background failed, using fallback:", e);
+    }
 
     // ===== Header bar =====
     ctx.fillStyle = C.gold;
