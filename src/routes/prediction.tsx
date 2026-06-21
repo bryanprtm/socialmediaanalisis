@@ -127,6 +127,16 @@ function Page() {
             ))}
           </ul>
         )}
+        <AIPanelInsight
+          panel="Topik yang Diprediksi Naik"
+          data={{
+            kandidat_naik: topKeywords.map((k) => ({
+              topik: k.name,
+              mention_saat_ini: k.count,
+              skor_relatif_pct: Math.round((k.count / maxKw) * 100),
+            })),
+          }}
+        />
       </Panel>
 
       <AINarrative
