@@ -140,6 +140,7 @@ function Page() {
   const { filtered, active, loading } = useFilteredArticles();
   const s = summarize(filtered);
   const genFn = useServerFn(generateWhatsAppReport);
+  const posterBgFn = useServerFn(generatePosterBackground);
   const [templateId, setTemplateId] = useState<string>("daily");
   const [report, setReport] = useState<string>("");
   const [generating, setGenerating] = useState(false);
