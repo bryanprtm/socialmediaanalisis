@@ -27,6 +27,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ComparativeRouteImport } from './routes/comparative'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicHooksSyncRssRouteImport } from './routes/api/public/hooks/sync-rss'
 
 const TrendsRoute = TrendsRouteImport.update({
   id: '/trends',
@@ -118,6 +119,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksSyncRssRoute = ApiPublicHooksSyncRssRouteImport.update({
+  id: '/api/public/hooks/sync-rss',
+  path: '/api/public/hooks/sync-rss',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/sna': typeof SnaRoute
   '/trends': typeof TrendsRoute
+  '/api/public/hooks/sync-rss': typeof ApiPublicHooksSyncRssRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/sna': typeof SnaRoute
   '/trends': typeof TrendsRoute
+  '/api/public/hooks/sync-rss': typeof ApiPublicHooksSyncRssRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/sna': typeof SnaRoute
   '/trends': typeof TrendsRoute
+  '/api/public/hooks/sync-rss': typeof ApiPublicHooksSyncRssRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -201,6 +210,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sna'
     | '/trends'
+    | '/api/public/hooks/sync-rss'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sna'
     | '/trends'
+    | '/api/public/hooks/sync-rss'
   id:
     | '__root__'
     | '/'
@@ -241,6 +252,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sna'
     | '/trends'
+    | '/api/public/hooks/sync-rss'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -262,6 +274,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SnaRoute: typeof SnaRoute
   TrendsRoute: typeof TrendsRoute
+  ApiPublicHooksSyncRssRoute: typeof ApiPublicHooksSyncRssRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -392,6 +405,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/sync-rss': {
+      id: '/api/public/hooks/sync-rss'
+      path: '/api/public/hooks/sync-rss'
+      fullPath: '/api/public/hooks/sync-rss'
+      preLoaderRoute: typeof ApiPublicHooksSyncRssRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -414,6 +434,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SnaRoute: SnaRoute,
   TrendsRoute: TrendsRoute,
+  ApiPublicHooksSyncRssRoute: ApiPublicHooksSyncRssRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
