@@ -65,9 +65,18 @@ export const generateAnalysisNarrative = createServerFn({ method: "POST" })
     const user = `Halaman: ${data.page}\n\nData ringkas (JSON / bullet):\n${data.context}\n\nTulis narasi analisis 2-4 paragraf dalam Bahasa Indonesia yang mencakup: (1) gambaran umum kondisi, (2) temuan kunci dari data, (3) implikasi / risiko / peluang, (4) rekomendasi singkat. Jangan gunakan markdown heading, gunakan teks biasa.`;
 
     let narrative: string;
-    if (cfg.provider === "openai") {
-      if (!cfg.openaiKey) throw new Error("API key OpenAI belum diset. Buka Profil → Pengaturan AI untuk memasukkan token.");
-      narrative = await callOpenAI(cfg.openaiKey, cfg.openaiModel, system, user);
+    if (cfg.provider === "openai" && cfg.openaiKey) {
+      try {
+        narrative = await callOpenAI(cfg.openaiKey, cfg.openaiModel, system, user);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        try {
+          narrative = await callLovable(system, user);
+          narrative = `[Fallback AI — OpenAI gagal: ${msg}]\n\n${narrative}`;
+        } catch {
+          throw e;
+        }
+      }
     } else {
       narrative = await callLovable(system, user);
     }
