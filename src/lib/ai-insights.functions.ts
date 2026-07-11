@@ -62,9 +62,16 @@ export const generatePanelInsight = createServerFn({ method: "POST" })
     const user = `Panel: ${data.panel}\n\nData:\n${data.data}\n\nBerikan analisa 2-3 paragraf pendek dalam Bahasa Indonesia mencakup: (1) pola utama yang terlihat, (2) insight / implikasi penting, (3) rekomendasi singkat untuk pemantauan atau tindak lanjut. Maksimal 180 kata.`;
 
     let insight: string;
-    if (cfg.provider === "openai") {
-      if (!cfg.openaiKey) throw new Error("API key OpenAI belum diset. Buka Profil → Pengaturan AI untuk memasukkan token.");
-      insight = await callOpenAI(cfg.openaiKey, cfg.openaiModel, system, user);
+    if (cfg.provider === "openai" && cfg.openaiKey) {
+      try {
+        insight = await callOpenAI(cfg.openaiKey, cfg.openaiModel, system, user);
+      } catch (e) {
+        try {
+          insight = await callLovable(system, user);
+        } catch {
+          throw e;
+        }
+      }
     } else {
       insight = await callLovable(system, user);
     }
