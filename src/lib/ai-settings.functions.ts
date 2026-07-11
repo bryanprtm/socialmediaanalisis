@@ -4,7 +4,7 @@ import { z } from "zod";
 
 export type AiProvider = "openai" | "lovable";
 
-export type AiSettings = {
+export type AiSettingsPublic = {
   ai_provider: AiProvider;
   openai_model: string;
   openai_image_model: string;
@@ -21,7 +21,13 @@ async function loadRaw() {
     .eq("id", 1)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  return data;
+  return data as {
+    ai_provider: string;
+    openai_api_key: string | null;
+    openai_model: string;
+    openai_image_model: string;
+    updated_at: string;
+  } | null;
 }
 
 function mask(k: string | null | undefined): string | null {
@@ -30,24 +36,23 @@ function mask(k: string | null | undefined): string | null {
   return `${k.slice(0, 5)}…${k.slice(-4)}`;
 }
 
-/** Publicly (auth-only) readable — returns non-secret fields + masked key indicator. */
 export const getAiSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<AiSettings> => {
+  .handler(async (): Promise<AiSettingsPublic> => {
     const row = await loadRaw();
     return {
-      ai_provider: (row?.ai_provider as AiProvider) ?? "openai",
+      ai_provider: ((row?.ai_provider as AiProvider) ?? "openai"),
       openai_model: row?.openai_model ?? "gpt-4o-mini",
       openai_image_model: row?.openai_image_model ?? "gpt-image-1",
       has_openai_key: !!row?.openai_api_key,
-      openai_key_masked: mask(row?.openai_api_key),
+      openai_key_masked: mask(row?.openai_api_key ?? null),
       updated_at: row?.updated_at ?? null,
     };
   });
 
 const UpdateSchema = z.object({
   ai_provider: z.enum(["openai", "lovable"]).optional(),
-  openai_api_key: z.string().min(0).max(500).optional(),
+  openai_api_key: z.string().max(500).optional(),
   openai_model: z.string().min(1).max(80).optional(),
   openai_image_model: z.string().min(1).max(80).optional(),
   clear_key: z.boolean().optional(),
@@ -64,7 +69,7 @@ export const updateAiSettings = createServerFn({ method: "POST" })
     if (rErr) throw new Error(rErr.message);
     if (!isAdmin) throw new Error("Forbidden: admin role required");
 
-    const patch: Record<string, unknown> = { updated_by: context.userId };
+    const patch: Record<string, unknown> = { id: 1, updated_by: context.userId };
     if (data.ai_provider) patch.ai_provider = data.ai_provider;
     if (data.openai_model) patch.openai_model = data.openai_model;
     if (data.openai_image_model) patch.openai_image_model = data.openai_image_model;
@@ -79,12 +84,12 @@ export const updateAiSettings = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("app_settings")
-      .upsert({ id: 1, ...patch }, { onConflict: "id" });
+      .upsert(patch as never, { onConflict: "id" });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
-/** Server-side helper for other server functions — returns full key (unsafe to expose). */
+/** Server-side helper for other server functions — returns FULL key. */
 export async function loadAiRuntimeConfig(): Promise<{
   provider: AiProvider;
   openaiKey: string | null;
@@ -93,7 +98,7 @@ export async function loadAiRuntimeConfig(): Promise<{
 }> {
   const row = await loadRaw();
   return {
-    provider: (row?.ai_provider as AiProvider) ?? "openai",
+    provider: ((row?.ai_provider as AiProvider) ?? "openai"),
     openaiKey: row?.openai_api_key ?? process.env.OPENAI_API_KEY ?? null,
     openaiModel: row?.openai_model ?? "gpt-4o-mini",
     openaiImageModel: row?.openai_image_model ?? "gpt-image-1",
