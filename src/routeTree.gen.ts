@@ -25,6 +25,7 @@ import { Route as KeywordsRouteImport } from './routes/keywords'
 import { Route as ExportRouteImport } from './routes/export'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ComparativeRouteImport } from './routes/comparative'
+import { Route as CommandCenterRouteImport } from './routes/command-center'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicHooksSyncRssRouteImport } from './routes/api/public/hooks/sync-rss'
@@ -109,6 +110,11 @@ const ComparativeRoute = ComparativeRouteImport.update({
   path: '/comparative',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CommandCenterRoute = CommandCenterRouteImport.update({
+  id: '/command-center',
+  path: '/command-center',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -128,6 +134,7 @@ const ApiPublicHooksSyncRssRoute = ApiPublicHooksSyncRssRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/command-center': typeof CommandCenterRoute
   '/comparative': typeof ComparativeRoute
   '/dashboard': typeof DashboardRoute
   '/export': typeof ExportRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/command-center': typeof CommandCenterRoute
   '/comparative': typeof ComparativeRoute
   '/dashboard': typeof DashboardRoute
   '/export': typeof ExportRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/command-center': typeof CommandCenterRoute
   '/comparative': typeof ComparativeRoute
   '/dashboard': typeof DashboardRoute
   '/export': typeof ExportRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/command-center'
     | '/comparative'
     | '/dashboard'
     | '/export'
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/command-center'
     | '/comparative'
     | '/dashboard'
     | '/export'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/command-center'
     | '/comparative'
     | '/dashboard'
     | '/export'
@@ -258,6 +270,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  CommandCenterRoute: typeof CommandCenterRoute
   ComparativeRoute: typeof ComparativeRoute
   DashboardRoute: typeof DashboardRoute
   ExportRoute: typeof ExportRoute
@@ -391,6 +404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComparativeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/command-center': {
+      id: '/command-center'
+      path: '/command-center'
+      fullPath: '/command-center'
+      preLoaderRoute: typeof CommandCenterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -418,6 +438,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  CommandCenterRoute: CommandCenterRoute,
   ComparativeRoute: ComparativeRoute,
   DashboardRoute: DashboardRoute,
   ExportRoute: ExportRoute,

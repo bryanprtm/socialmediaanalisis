@@ -46,8 +46,9 @@ const features = [
 
 
 function useClock() {
-  const [t, setT] = useState(() => new Date());
+  const [t, setT] = useState<Date | null>(null);
   useEffect(() => {
+    setT(new Date());
     const id = setInterval(() => setT(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
@@ -58,8 +59,8 @@ export function HomeView() {
   const [tab, setTab] = useState<TabId>("fitur");
   const [live, setLive] = useState(true);
   const t = useClock();
-  const time = t.toLocaleTimeString("id-ID", { hour12: false });
-  const date = t.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const time = t ? t.toLocaleTimeString("id-ID", { hour12: false }) : "--:--:--";
+  const date = t ? t.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : "";
 
   const { filtered, loading } = useFilteredArticles();
   const s = summarize(filtered);

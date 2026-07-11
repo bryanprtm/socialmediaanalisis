@@ -24,6 +24,7 @@ import {
   Database,
   KeyRound,
   Sparkles,
+  Siren,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -43,6 +44,7 @@ type NavGroup = {
 
 const navItems: NavGroup[] = [
   { to: "/", label: "Home", icon: Home },
+  { to: "/command-center", label: "Command Center", icon: Siren },
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   {
     to: "/sentiment",
