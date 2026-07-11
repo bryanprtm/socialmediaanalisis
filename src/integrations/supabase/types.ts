@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          ai_provider: string
+          id: number
+          openai_api_key: string | null
+          openai_image_model: string
+          openai_model: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          ai_provider?: string
+          id?: number
+          openai_api_key?: string | null
+          openai_image_model?: string
+          openai_model?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          ai_provider?: string
+          id?: number
+          openai_api_key?: string | null
+          openai_image_model?: string
+          openai_model?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       keyword_queries: {
         Row: {
           created_at: string
