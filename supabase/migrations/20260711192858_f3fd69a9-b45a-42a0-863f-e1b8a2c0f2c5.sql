@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "auth read app_settings" ON public.app_settings;
+CREATE POLICY "admin read app_settings" ON public.app_settings FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
