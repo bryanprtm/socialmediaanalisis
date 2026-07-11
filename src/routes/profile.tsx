@@ -271,6 +271,60 @@ function Page() {
 
             {isAdmin && (
               <>
+                <Panel title="Pengaturan AI (OpenAI Token)" icon={<Sparkles className="h-4 w-4" />}>
+                  <p className="mb-3 text-xs text-muted-foreground">
+                    Token disimpan aman di database dan dipakai oleh semua analisa AI (narasi, insight panel, poster). Cocok untuk deployment VPS — cukup masukkan token OpenAI di sini, tanpa perlu mengubah environment variable.
+                  </p>
+                  <form onSubmit={handleSaveAi} className="grid gap-4 sm:grid-cols-2">
+                    <Field label="Provider AI">
+                      <select value={aiForm.provider} onChange={(e) => setAiForm({ ...aiForm, provider: e.target.value as "openai" | "lovable" })} className={inputCls}>
+                        <option value="openai">OpenAI (rekomendasi)</option>
+                        <option value="lovable">Lovable AI Gateway</option>
+                      </select>
+                    </Field>
+                    <Field label="Model Teks (OpenAI)">
+                      <select value={aiForm.model} onChange={(e) => setAiForm({ ...aiForm, model: e.target.value })} className={inputCls}>
+                        <option value="gpt-4o-mini">gpt-4o-mini (murah & cepat)</option>
+                        <option value="gpt-4o">gpt-4o</option>
+                        <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                        <option value="gpt-4.1">gpt-4.1</option>
+                      </select>
+                    </Field>
+                    <Field label="Model Gambar (Poster)">
+                      <select value={aiForm.imageModel} onChange={(e) => setAiForm({ ...aiForm, imageModel: e.target.value })} className={inputCls}>
+                        <option value="gpt-image-1">gpt-image-1</option>
+                        <option value="dall-e-3">dall-e-3</option>
+                      </select>
+                    </Field>
+                    <Field label={ai?.has_openai_key ? `Token OpenAI (tersimpan: ${ai.openai_key_masked})` : "Token OpenAI (sk-…)"}>
+                      <input
+                        type="password"
+                        autoComplete="off"
+                        value={aiForm.key}
+                        onChange={(e) => setAiForm({ ...aiForm, key: e.target.value })}
+                        placeholder={ai?.has_openai_key ? "Isi untuk mengganti token" : "sk-proj-..."}
+                        className={inputCls}
+                      />
+                    </Field>
+                    <div className="sm:col-span-2 flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {ai?.updated_at ? `Diperbarui: ${new Date(ai.updated_at).toLocaleString("id-ID")}` : "Belum pernah dikonfigurasi"}
+                      </p>
+                      <div className="flex gap-2">
+                        {ai?.has_openai_key && (
+                          <button type="button" onClick={handleClearKey} className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive hover:bg-destructive/20">
+                            <Trash2 className="h-3.5 w-3.5" /> Hapus Token
+                          </button>
+                        )}
+                        <button disabled={aiSaving} className={btnPrimary}>
+                          <Save className="h-3.5 w-3.5" /> {aiSaving ? "Menyimpan…" : "Simpan Pengaturan"}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </Panel>
+
+
                 <Panel title="Tambah Pengguna" icon={<UserPlus className="h-4 w-4" />}>
                   <form onSubmit={handleAddUser} className="grid gap-4 sm:grid-cols-2">
                     <Field label="Email">
