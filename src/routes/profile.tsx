@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { PageShell, Panel, Pill } from "@/components/PageShell";
-import { User, Mail, Shield, Key, UserPlus, Trash2, Save, Lock, RefreshCw } from "lucide-react";
+import { User, Mail, Shield, Key, UserPlus, Trash2, Save, Lock, RefreshCw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -14,6 +14,8 @@ import {
   setUserRole,
   adminResetPassword,
 } from "@/lib/user-admin.functions";
+import { getAiSettings, updateAiSettings, type AiSettingsPublic } from "@/lib/ai-settings.functions";
+
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -36,6 +38,9 @@ function Page() {
   const removeUser = useServerFn(deleteUser);
   const changeRole = useServerFn(setUserRole);
   const resetPwd = useServerFn(adminResetPassword);
+  const fetchAi = useServerFn(getAiSettings);
+  const saveAi = useServerFn(updateAiSettings);
+
 
   const [me, setMe] = useState<Me | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +57,13 @@ function Page() {
   const [nu, setNu] = useState({ email: "", password: "", display_name: "", role: "user" as "user" | "admin" });
   const [adding, setAdding] = useState(false);
 
+  const [ai, setAi] = useState<AiSettingsPublic | null>(null);
+  const [aiForm, setAiForm] = useState({ provider: "openai" as "openai" | "lovable", key: "", model: "gpt-4o-mini", imageModel: "gpt-image-1" });
+  const [aiSaving, setAiSaving] = useState(false);
+
   const isAdmin = !!me?.roles.includes("admin");
+
+
 
   async function loadMe() {
     try {
