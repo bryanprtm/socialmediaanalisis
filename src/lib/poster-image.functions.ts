@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { loadAiRuntimeConfig } from "./ai-settings.functions";
+
 
 const InputSchema = z.object({
   templateName: z.string().min(1).max(80),
@@ -14,8 +16,10 @@ const InputSchema = z.object({
 export const generatePosterBackground = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => InputSchema.parse(d))
   .handler(async ({ data }) => {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error("OPENAI_API_KEY belum dikonfigurasi");
+    const cfg = await loadAiRuntimeConfig();
+    const apiKey = cfg.openaiKey;
+    if (!apiKey) throw new Error("API key OpenAI belum diset. Buka Profil → Pengaturan AI untuk memasukkan token.");
+
 
     const prompt = `A premium, ultra-professional intelligence report poster background (1024x1536, portrait).
 Theme: media monitoring & sentiment analysis dashboard for an Indonesian government intelligence unit ("TOC Sat Bantek").
