@@ -36,7 +36,7 @@ Periode laporan: ${data.periode}. Topik dominan terkait: ${data.topKeywords.slic
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-image-1",
+        model: cfg.openaiImageModel,
         prompt,
         size: "1024x1536",
         quality: "medium",
