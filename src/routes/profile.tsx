@@ -90,8 +90,49 @@ function Page() {
     }
   }
 
+  async function loadAi() {
+    try {
+      const a = await fetchAi();
+      setAi(a);
+      setAiForm((f) => ({ ...f, provider: a.ai_provider, model: a.openai_model, imageModel: a.openai_image_model }));
+    } catch (e: any) {
+      toast.error(e.message ?? "Gagal memuat pengaturan AI");
+    }
+  }
+
   useEffect(() => { loadMe(); }, []);
-  useEffect(() => { if (isAdmin) loadUsers(); }, [isAdmin]);
+  useEffect(() => { if (isAdmin) { loadUsers(); loadAi(); } }, [isAdmin]);
+
+  async function handleSaveAi(e: React.FormEvent) {
+    e.preventDefault();
+    setAiSaving(true);
+    try {
+      await saveAi({ data: {
+        ai_provider: aiForm.provider,
+        openai_model: aiForm.model,
+        openai_image_model: aiForm.imageModel,
+        openai_api_key: aiForm.key || undefined,
+      }});
+      toast.success("Pengaturan AI tersimpan");
+      setAiForm((f) => ({ ...f, key: "" }));
+      await loadAi();
+    } catch (e: any) {
+      toast.error(e.message ?? "Gagal menyimpan");
+    } finally {
+      setAiSaving(false);
+    }
+  }
+
+  async function handleClearKey() {
+    if (!confirm("Hapus API key OpenAI yang tersimpan?")) return;
+    try {
+      await saveAi({ data: { clear_key: true } });
+      toast.success("API key dihapus");
+      await loadAi();
+    } catch (e: any) { toast.error(e.message); }
+  }
+
+
 
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
