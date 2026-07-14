@@ -42,6 +42,8 @@ function Page() {
       }
     >
       <div className="grid gap-5 lg:grid-cols-2">
+        <AiSettingsPanel />
+
         <Panel title="Tampilan & Bahasa" icon={<Palette className="h-4 w-4" />}>
           <div className="space-y-2.5">
             <Row label="Theme" hint="Command center dark mode dengan neon accent" control={<Pill tone="info">Dark · Neon</Pill>} />
