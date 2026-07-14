@@ -51,6 +51,9 @@ function timeAgo(iso: string | null) {
   return `${Math.floor(h / 24)}h lalu`;
 }
 
+const LIST_COLUMNS =
+  "id,title,url,source,category,excerpt,sentiment,sentiment_score,confidence,published_at,region,keywords";
+
 function Page() {
   const { isAuthenticated, user, loading: authLoading } = useAuth();
   const { active } = useActiveKeyword();
@@ -59,7 +62,11 @@ function Page() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | Sentiment>("all");
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 6;
+  const PAGE_SIZE = 20;
+  const [totalCount, setTotalCount] = useState(0);
+  const [posCount, setPosCount] = useState(0);
+  const [negCount, setNegCount] = useState(0);
+  const [pendingNew, setPendingNew] = useState(0);
   const [form, setForm] = useState(empty);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -124,29 +131,51 @@ function Page() {
     }
   }
 
+  // Build a query with the shared filters (date range, active keyword terms).
+  function applyFilters<T extends { gte: any; lte: any; overlaps: any; eq: any }>(q: T): T {
+    let out: any = q;
+    if (startDate) out = out.gte("published_at", `${startDate}T00:00:00`);
+    if (endDate) out = out.lte("published_at", `${endDate}T23:59:59.999`);
+    if (active && active.terms && active.terms.length > 0) {
+      out = out.overlaps("keywords", active.terms);
+    }
+    return out as T;
+  }
+
   async function load() {
     setLoading(true);
-    const pageSize = 1000;
-    const all: Article[] = [];
-    let lastError: { message: string } | null = null;
-    for (let from = 0; ; from += pageSize) {
-      let q = supabase
-        .from("news_articles")
-        .select("*")
-        .order("published_at", { ascending: false })
-        .range(from, from + pageSize - 1);
-      if (filter !== "all") q = q.eq("sentiment", filter);
-      const { data, error } = await q;
-      if (error) {
-        lastError = error;
-        break;
-      }
-      if (!data || data.length === 0) break;
-      all.push(...(data as Article[]));
-      if (data.length < pageSize) break;
+    setPendingNew(0);
+    const from = (page - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    // Main paginated list (only the current page, without `content`).
+    let listQ: any = supabase
+      .from("news_articles")
+      .select(LIST_COLUMNS, { count: "exact" })
+      .order("published_at", { ascending: false })
+      .range(from, to);
+    if (filter !== "all") listQ = listQ.eq("sentiment", filter);
+    listQ = applyFilters(listQ);
+
+    // Sentiment counts (head:true → no rows transferred).
+    let totalQ: any = supabase.from("news_articles").select("id", { count: "exact", head: true });
+    let posQ: any = supabase.from("news_articles").select("id", { count: "exact", head: true }).eq("sentiment", "positive");
+    let negQ: any = supabase.from("news_articles").select("id", { count: "exact", head: true }).eq("sentiment", "negative");
+    totalQ = applyFilters(totalQ);
+    posQ = applyFilters(posQ);
+    negQ = applyFilters(negQ);
+
+    const [listRes, totalRes, posRes, negRes] = await Promise.all([listQ, totalQ, posQ, negQ]);
+
+    if (listRes.error) {
+      toast.error(listRes.error.message);
+    } else {
+      setArticles((listRes.data ?? []) as Article[]);
+      setTotalCount(listRes.count ?? 0);
     }
-    if (lastError) toast.error(lastError.message);
-    else setArticles(all);
+    if (!totalRes.error) setTotalCount(totalRes.count ?? 0);
+    if (!posRes.error) setPosCount(posRes.count ?? 0);
+    if (!negRes.error) setNegCount(negRes.count ?? 0);
     setLoading(false);
   }
 
@@ -154,13 +183,15 @@ function Page() {
     load();
     const ch = supabase
       .channel("news-feed")
-      .on("postgres_changes", { event: "*", schema: "public", table: "news_articles" }, () => load())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "news_articles" }, () => {
+        setPendingNew((n) => n + 1);
+      })
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
+  }, [filter, page, active?.id, startDate, endDate]);
 
   // Auto sync RSS + analyze sentiment every 1 minute (admin only)
   useEffect(() => {
@@ -198,6 +229,7 @@ function Page() {
     if (error) return toast.error(error.message);
     toast.success("Berita ditambahkan");
     setForm(empty);
+    load();
   }
 
   function startEdit(a: Article) {
@@ -229,6 +261,7 @@ function Page() {
     toast.success("Berita diperbarui");
     setEditingId(null);
     setEditDraft({});
+    load();
   }
 
   async function deleteArticle(id: string) {
@@ -236,32 +269,24 @@ function Page() {
     const { error } = await supabase.from("news_articles").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Berita dihapus");
+    load();
   }
 
-  const filtered = articles
-    .filter((a) => matchesDateFilter(a.published_at, startDate, endDate))
-    .filter((a) =>
-      active
-        ? evalExpression(
-            active.expression,
-            [a.title, a.excerpt ?? "", a.source, a.category ?? "", (a.keywords ?? []).join(" ")].join(" "),
-          )
-        : true,
-    );
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  // Server has already filtered/paginated; show rows as-is.
+  const pageItems = articles;
+  const filteredTotal = totalCount;
+  const totalPages = Math.max(1, Math.ceil(filteredTotal / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  const pageItems = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   useEffect(() => {
     setPage(1);
   }, [filter, active?.id, startDate, endDate]);
 
   const counts = {
-    total: filtered.length,
-    positive: filtered.filter((a) => a.sentiment === "positive").length,
-    negative: filtered.filter((a) => a.sentiment === "negative").length,
-    sources: new Set(filtered.map((a) => a.source)).size,
+    total: filteredTotal,
+    positive: posCount,
+    negative: negCount,
+    sources: new Set(pageItems.map((a) => a.source)).size,
   };
 
   return (
