@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, Panel, Pill, Bar } from "@/components/PageShell";
 import { Settings as SettingsIcon, Palette, Globe, Database, Shield, Bell, Zap, Save, RotateCcw, Cpu, HardDrive, Wifi } from "lucide-react";
+import { AiSettingsPanel } from "@/components/AiSettingsPanel";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Settings — TOC Sat Bantek" }, { name: "description", content: "Konfigurasi sistem TOC Sat Bantek Command Center." }] }),
@@ -41,6 +42,8 @@ function Page() {
       }
     >
       <div className="grid gap-5 lg:grid-cols-2">
+        <AiSettingsPanel />
+
         <Panel title="Tampilan & Bahasa" icon={<Palette className="h-4 w-4" />}>
           <div className="space-y-2.5">
             <Row label="Theme" hint="Command center dark mode dengan neon accent" control={<Pill tone="info">Dark · Neon</Pill>} />
