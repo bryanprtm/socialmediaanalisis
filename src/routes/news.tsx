@@ -540,7 +540,7 @@ function Page() {
           jumlah_sumber: counts.sources,
           filter_sentimen: filter,
           query_aktif: active?.name ?? null,
-          judul_terbaru: filtered.slice(0, 10).map((a) => ({ judul: a.title, sumber: a.source, sentimen: a.sentiment, kategori: a.category })),
+          judul_terbaru: pageItems.slice(0, 10).map((a) => ({ judul: a.title, sumber: a.source, sentimen: a.sentiment, kategori: a.category })),
         }}
       />
     </PageShell>
