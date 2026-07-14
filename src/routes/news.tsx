@@ -350,7 +350,7 @@ function Page() {
         >
           {loading ? (
             <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">Memuat data…</div>
-          ) : filtered.length === 0 ? (
+          ) : pageItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Database className="mb-2 h-8 w-8 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
