@@ -63,7 +63,7 @@ function Page() {
             <Row label="Auto-sync RSS Feed" hint="Interval sinkronisasi otomatis" control={
               <select className="rounded-md border border-border bg-panel-elevated px-3 py-1.5 text-xs text-foreground"><option>Setiap 5 menit</option><option>15 menit</option><option>1 jam</option></select>
             } />
-            <Row label="Retention Periode" hint="Data disimpan selamanya, tanpa batas waktu" control={<Pill tone="success">Unlimited</Pill>} />
+            <Row label="Retention Periode" hint="Data disimpan selamanya, tanpa batas waktu" control={<Pill tone="positive">Unlimited</Pill>} />
 
             <Row label="Cache Hasil Analisis" hint="Mempercepat halaman analitik" control={<Toggle on={true} />} />
             <Row label="Background Processing" hint="Jalankan ingestion di latar" control={<Toggle on={true} />} />
