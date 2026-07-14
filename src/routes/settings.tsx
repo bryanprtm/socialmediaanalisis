@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, Panel, Pill, Bar } from "@/components/PageShell";
 import { Settings as SettingsIcon, Palette, Globe, Database, Shield, Bell, Zap, Save, RotateCcw, Cpu, HardDrive, Wifi } from "lucide-react";
+import { AiSettingsPanel } from "@/components/AiSettingsPanel";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({ meta: [{ title: "Settings — TOC Sat Bantek" }, { name: "description", content: "Konfigurasi sistem TOC Sat Bantek Command Center." }] }),
