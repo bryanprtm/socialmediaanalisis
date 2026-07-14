@@ -477,7 +477,7 @@ function Page() {
             {totalPages > 1 && (
               <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3">
                 <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                  Menampilkan {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} dari {filtered.length}
+                  Menampilkan {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredTotal)} dari {filteredTotal}
                 </span>
                 <div className="flex items-center gap-1.5">
                   <button
