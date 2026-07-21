@@ -136,17 +136,20 @@ function Page() {
     if (startDate) out = out.gte("published_at", `${startDate}T00:00:00`);
     if (endDate) out = out.lte("published_at", `${endDate}T23:59:59.999`);
     if (active && active.terms && active.terms.length > 0) {
-      // Match term in title/excerpt/category OR in keywords array — because
-      // most rows have an empty `keywords` column, using .overlaps alone
-      // returns no results.
-      const escape = (s: string) => s.replace(/[,()"']/g, " ").trim();
+      // Match term across title/excerpt/content/source/category/region — mirrors
+      // the client-side `articleText` used by useFilteredArticles so counts
+      // are consistent with dashboard/other pages.
+      const escape = (s: string) => s.replace(/[,()"'*]/g, " ").trim();
       const ors: string[] = [];
       for (const raw of active.terms) {
         const t = escape(raw);
         if (!t) continue;
         ors.push(`title.ilike.*${t}*`);
         ors.push(`excerpt.ilike.*${t}*`);
+        ors.push(`content.ilike.*${t}*`);
+        ors.push(`source.ilike.*${t}*`);
         ors.push(`category.ilike.*${t}*`);
+        ors.push(`region.ilike.*${t}*`);
       }
       if (ors.length > 0) out = out.or(ors.join(","));
     }
