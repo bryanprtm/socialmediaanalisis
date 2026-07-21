@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Panel } from "@/components/PageShell";
 import { Download, Database, Loader2, FileJson, FileSpreadsheet } from "lucide-react";
 import { exportDatabase } from "@/lib/db-export.functions";
-import { useAuth } from "@/hooks/use-auth";
+
 import { toast } from "sonner";
 
 function toCsv(rows: any[]): string {
@@ -33,12 +33,9 @@ function download(name: string, content: string, mime: string) {
 }
 
 export function DatabaseExportPanel() {
-  const { isAdmin } = useAuth();
   const run = useServerFn(exportDatabase);
   const [loading, setLoading] = useState<"json" | "csv" | null>(null);
   const [lastCounts, setLastCounts] = useState<Record<string, number> | null>(null);
-
-  if (!isAdmin) return null;
 
   const handleExport = async (fmt: "json" | "csv") => {
     setLoading(fmt);
