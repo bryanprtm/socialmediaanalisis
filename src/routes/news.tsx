@@ -131,12 +131,24 @@ function Page() {
   }
 
   // Build a query with the shared filters (date range, active keyword terms).
-  function applyFilters<T extends { gte: any; lte: any; overlaps: any; eq: any }>(q: T): T {
+  function applyFilters<T extends { gte: any; lte: any; overlaps: any; eq: any; or: any }>(q: T): T {
     let out: any = q;
     if (startDate) out = out.gte("published_at", `${startDate}T00:00:00`);
     if (endDate) out = out.lte("published_at", `${endDate}T23:59:59.999`);
     if (active && active.terms && active.terms.length > 0) {
-      out = out.overlaps("keywords", active.terms);
+      // Match term in title/excerpt/category OR in keywords array — because
+      // most rows have an empty `keywords` column, using .overlaps alone
+      // returns no results.
+      const escape = (s: string) => s.replace(/[,()"']/g, " ").trim();
+      const ors: string[] = [];
+      for (const raw of active.terms) {
+        const t = escape(raw);
+        if (!t) continue;
+        ors.push(`title.ilike.*${t}*`);
+        ors.push(`excerpt.ilike.*${t}*`);
+        ors.push(`category.ilike.*${t}*`);
+      }
+      if (ors.length > 0) out = out.or(ors.join(","));
     }
     return out as T;
   }
